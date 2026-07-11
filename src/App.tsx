@@ -1,17 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography } from 'antd';
 import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import Market from './pages/Market';
-import Dashboard from './pages/Dashboard';
 import ThemeDetail from './pages/ThemeDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Services from './pages/Services';
 import TemplatesPreview from './pages/TemplatesPreview';
 import AdminThemes from './admin/Themes';
+import AdminLicenses from './admin/Licenses';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -20,11 +20,25 @@ const App: React.FC = () => {
   const cart = useSelector((state: RootState) => state.themeUI.cart);
   const location = useLocation();
 
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('admin_logged_in') === 'true';
+  });
+
+  useEffect(() => {
+    const handleLoginChange = () => {
+      setIsAdmin(localStorage.getItem('admin_logged_in') === 'true');
+    };
+    window.addEventListener('admin-login-change', handleLoginChange);
+    return () => {
+      window.removeEventListener('admin-login-change', handleLoginChange);
+    };
+  }, []);
+
   // Determine current active menu item based on routing path
   const currentKey = 
-    location.pathname === '/dashboard' ? 'dashboard' : 
-    location.pathname === '/services' ? 'services' : 
-    location.pathname.startsWith('/admin') ? 'admin' : 'market';
+    location.pathname === '/admin/licenses' ? 'licenses' : 
+    location.pathname === '/admin/themes' ? 'admin-themes' : 
+    location.pathname === '/services' ? 'services' : 'market';
 
   return (
     <ConfigProvider
@@ -113,17 +127,17 @@ const App: React.FC = () => {
                 icon: <SettingOutlined />,
                 label: <Link to="/services">Dịch vụ Website</Link>,
               },
-              {
-                key: 'dashboard',
+              isAdmin && {
+                key: 'licenses',
                 icon: <DashboardOutlined />,
-                label: <Link to="/dashboard">License Manager</Link>,
+                label: <Link to="/admin/licenses">License Manager</Link>,
               },
-              {
-                key: 'admin',
+              isAdmin && {
+                key: 'admin-themes',
                 icon: <DatabaseOutlined />,
                 label: <Link to="/admin/themes">Quản trị Theme</Link>,
               },
-            ]}
+            ].filter(Boolean) as any}
           />
 
           <div style={{ display: 'flex', alignItems: 'center', marginLeft: '16px' }}>
@@ -153,7 +167,7 @@ const App: React.FC = () => {
               <Route path="/templates-preview" element={<TemplatesPreview />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin/licenses" element={<AdminLicenses />} />
               <Route path="/admin/themes" element={<AdminThemes />} />
             </Routes>
           </div>

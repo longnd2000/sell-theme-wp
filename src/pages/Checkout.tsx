@@ -60,7 +60,7 @@ const Checkout: React.FC = () => {
             title="Thanh Toán Thành Công!"
             subTitle="Cảm ơn bạn đã mua hàng. Key bản quyền của bạn đã được khởi tạo tự động."
             extra={[
-              <Button type="primary" size="large" onClick={() => navigate('/dashboard')} key="dashboard" icon={<SafetyCertificateOutlined />}>
+              <Button type="primary" size="large" onClick={() => navigate('/admin/licenses')} key="dashboard" icon={<SafetyCertificateOutlined />}>
                 Đến Quản Lý Bản Quyền
               </Button>,
               <Button size="large" onClick={() => navigate('/')} key="market">

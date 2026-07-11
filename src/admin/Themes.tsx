@@ -41,6 +41,7 @@ const AdminThemes: React.FC = () => {
     if (values.username === 'admin' && values.password === 'abc123') {
       localStorage.setItem('admin_logged_in', 'true');
       setIsLoggedIn(true);
+      window.dispatchEvent(new Event('admin-login-change'));
       message.success('Đăng nhập thành công với quyền Quản trị viên!');
     } else {
       message.error('Tài khoản hoặc mật khẩu không chính xác!');
@@ -50,6 +51,7 @@ const AdminThemes: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('admin_logged_in');
     setIsLoggedIn(false);
+    window.dispatchEvent(new Event('admin-login-change'));
     message.success('Đã đăng xuất tài khoản quản trị!');
   };
 

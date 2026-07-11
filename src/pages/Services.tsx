@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal } from 'antd';
+import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckOutlined,
@@ -8,7 +8,8 @@ import {
   CrownOutlined,
   MessageOutlined,
   PhoneOutlined,
-  CopyOutlined
+  CopyOutlined,
+  RocketOutlined
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
@@ -100,6 +101,20 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
+    title: 'Gói Landing Page',
+    price: 900000,
+    description: 'Tối ưu cho doanh nghiệp, cá nhân cần trang Landing Page đơn phục vụ chạy quảng cáo, giới thiệu sản phẩm, dịch vụ.',
+    icon: <RocketOutlined style={{ fontSize: '28px', color: '#06b6d4' }} />,
+    color: '#06b6d4',
+    features: [
+      'Thiết kế trực tiếp trên trang wordpress dùng theme LX Landing',
+      '1 trang Landing Page chuyên nghiệp (đầy đủ các phần: Hero, Giới thiệu, Tính năng, Form đăng ký, Khách hàng, Liên hệ)',
+      'Tương thích đa thiết bị',
+      'Hỗ trợ cấu hình form gửi thông tin liên hệ về Email hoặc Zalo/Google Sheets',
+      ...getCommitments('2 - 3 ngày')
+    ],
+  },
+  {
     title: 'Gói Cơ Bản',
     price: 2000000,
     description: 'Phù hợp cho các dự án giới thiệu cá nhân, shop nhỏ hoặc landing page giới thiệu sản phẩm đơn giản.',
@@ -153,6 +168,7 @@ const Services: React.FC = () => {
   // State quản lý đuôi tên miền được chọn cho từng gói
   const [selectedDomains, setSelectedDomains] = useState<Record<string, string>>({
     'Gói Clone & Vibe': '.top',
+    'Gói Landing Page': '.top',
     'Gói Cơ Bản': '.top',
     'Gói Phổ Biến': '.top',
     'Gói Cao Cấp': '.top',
@@ -161,6 +177,7 @@ const Services: React.FC = () => {
   // State quản lý gói hosting được chọn cho từng gói
   const [selectedHostings, setSelectedHostings] = useState<Record<string, string>>({
     'Gói Clone & Vibe': 'basic01',
+    'Gói Landing Page': 'basic01',
     'Gói Cơ Bản': 'basic01',
     'Gói Phổ Biến': 'basic01',
     'Gói Cao Cấp': 'basic01',
@@ -181,7 +198,7 @@ const Services: React.FC = () => {
       </div>
 
       {/* Pricing Cards Grid */}
-      <Row gutter={[16, 16]} justify="center" align="stretch" style={{ marginBottom: '48px' }}>
+      <div className="pricing-grid">
         {PLANS.map((plan) => {
           const selectedSuffix = selectedDomains[plan.title] || '.top';
           const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
@@ -205,7 +222,7 @@ const Services: React.FC = () => {
           ];
 
           return (
-            <Col xs={24} sm={12} lg={6} key={plan.title} style={{ display: 'flex' }}>
+            <div key={plan.title} style={{ display: 'flex', width: '100%' }}>
               <Card
                 hoverable
                 bordered={false}
@@ -340,9 +357,26 @@ const Services: React.FC = () => {
                             : `${h.name} (+${h.extraPrice.toLocaleString('vi-VN')} đ)`
                         }))}
                       />
-                      <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px', color: '#64748b' }}>
-                        Specs: {hostingOpt?.specs}
-                      </Text>
+                      {/* Hiển thị thông số dạng danh sách tag nổi bật */}
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        {hostingOpt?.specs.split(' / ').map((spec, idx) => (
+                          <Tag 
+                            key={idx} 
+                            style={{ 
+                              fontSize: '10px', 
+                              margin: 0, 
+                              borderRadius: '4px', 
+                              border: `1px solid ${plan.color}25`, 
+                              background: `${plan.color}08`, 
+                              color: plan.color,
+                              fontWeight: 600,
+                              padding: '1px 6px'
+                            }}
+                          >
+                            {spec}
+                          </Tag>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -358,6 +392,7 @@ const Services: React.FC = () => {
                         feat.startsWith('Thiết kế trực tiếp') ||
                         feat.startsWith('5 trang cơ bản') ||
                         feat.startsWith('10 trang cơ bản') ||
+                        feat.startsWith('1 trang Landing') ||
                         feat.startsWith('Clone giao diện') ||
                         feat.startsWith('Lập trình ghép Backend') ||
                         feat.startsWith('Tùy chỉnh giao diện') ||
@@ -437,10 +472,10 @@ const Services: React.FC = () => {
                   </Button>
                 </div>
               </Card>
-            </Col>
+            </div>
           );
         })}
-      </Row>
+      </div>
 
       {/* Trust section / banner */}
       <Card
@@ -550,6 +585,7 @@ const Services: React.FC = () => {
                       feat.startsWith('Thiết kế trực tiếp') ||
                       feat.startsWith('5 trang cơ bản') ||
                       feat.startsWith('10 trang cơ bản') ||
+                      feat.startsWith('1 trang Landing') ||
                       feat.startsWith('Clone giao diện') ||
                       feat.startsWith('Lập trình ghép Backend') ||
                       feat.startsWith('Tùy chỉnh giao diện') ||
@@ -661,9 +697,26 @@ const Services: React.FC = () => {
                         : `${h.name} (+${h.extraPrice.toLocaleString('vi-VN')} đ)`
                     }))}
                   />
-                  <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginTop: '2px', color: '#64748b' }}>
-                    Specs: {hostingOpt?.specs}
-                  </Text>
+                  {/* Hiển thị thông số dạng danh sách tag nổi bật */}
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                    {hostingOpt?.specs.split(' / ').map((spec, idx) => (
+                      <Tag 
+                        key={idx} 
+                        style={{ 
+                          fontSize: '9.5px', 
+                          margin: 0, 
+                          borderRadius: '4px', 
+                          border: `1px solid ${plan.color}25`, 
+                          background: `${plan.color}08`, 
+                          color: plan.color,
+                          fontWeight: 600,
+                          padding: '1px 6px'
+                        }}
+                      >
+                        {spec}
+                      </Tag>
+                    ))}
+                  </div>
                 </div>
               </div>
 
