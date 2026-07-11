@@ -17,49 +17,59 @@ const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const App: React.FC = () => {
+  // Lấy danh sách sản phẩm trong Giỏ hàng từ Redux Store toàn cục
   const cart = useSelector((state: RootState) => state.themeUI.cart);
+  // Sử dụng hook useLocation từ react-router-dom để lấy thông tin đường dẫn URL hiện tại
   const location = useLocation();
 
+  // State cục bộ xác định xem người dùng hiện tại có phải là Admin hay không.
+  // Khởi tạo giá trị bằng cách kiểm tra key 'admin_logged_in' trong localStorage.
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('admin_logged_in') === 'true';
   });
 
+  // Sử dụng useEffect để lắng nghe sự kiện đăng nhập/đăng xuất thay đổi trên phạm vi window.
+  // Cơ chế này giúp cập nhật ngay lập tức giao diện Menu Header (ẩn/hiện các tab quản trị).
   useEffect(() => {
     const handleLoginChange = () => {
+      // Đọc lại trạng thái đăng nhập mới nhất từ localStorage và cập nhật lại state isAdmin
       setIsAdmin(localStorage.getItem('admin_logged_in') === 'true');
     };
+    // Đăng ký lắng nghe sự kiện tự định nghĩa 'admin-login-change'
     window.addEventListener('admin-login-change', handleLoginChange);
+    // Hàm cleanup: Hủy lắng nghe sự kiện khi Component bị unmount để tránh rò rỉ bộ nhớ (memory leak)
     return () => {
       window.removeEventListener('admin-login-change', handleLoginChange);
     };
   }, []);
 
-  // Determine current active menu item based on routing path
+  // Xác định menu item nào đang được active (in đậm trên header) dựa trên đường dẫn URL hiện tại
   const currentKey = 
     location.pathname === '/admin/licenses' ? 'licenses' : 
     location.pathname === '/admin/themes' ? 'admin-themes' : 
     location.pathname === '/services' ? 'services' : 'market';
 
   return (
+    // ConfigProvider của Ant Design dùng để thiết lập Design System chung cho toàn dự án
     <ConfigProvider
       theme={{
-        algorithm: theme.defaultAlgorithm,
+        algorithm: theme.defaultAlgorithm, // Sử dụng thuật toán giao diện sáng mặc định
         token: {
-          colorPrimary: '#6366f1', // Trendy premium Indigo
+          colorPrimary: '#6366f1', // Thiết lập tông màu chủ đạo chính (Màu tím Indigo thời thượng)
           colorInfo: '#3b82f6',
-          borderRadius: 12,
-          fontFamily: "'Be Vietnam Pro', sans-serif",
+          borderRadius: 12,        // Độ bo góc mặc định của các phần tử UI (Button, Card, Input...)
+          fontFamily: "'Be Vietnam Pro', sans-serif", // Phông chữ mặc định toàn hệ thống
           colorBgContainer: '#ffffff',
           colorText: '#0f172a',
           colorTextDescription: '#334155',
         },
-        components: {
+        components: { // Tùy biến chi tiết (Custom Design Token) cho từng Component cụ thể
           Button: {
-            controlHeight: 40,
-            borderRadius: 8,
+            controlHeight: 40, // Chiều cao mặc định của nút bấm
+            borderRadius: 8,   // Độ bo góc riêng của nút bấm
           },
           Card: {
-            borderRadiusLG: 16,
+            borderRadiusLG: 16, // Độ bo góc riêng cho thẻ Card lớn
           },
         },
       }}

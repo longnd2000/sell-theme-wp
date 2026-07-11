@@ -29,3 +29,5 @@ Quy tắc phát triển dành cho dự án bán và quản lý WordPress theme (
   - Đối với giá sản phẩm: Hiển thị giá rõ ràng, các nhãn hành động phải dùng tiếng Việt thân thiện (ví dụ: "Thêm Vào Giỏ", "Kích Hoạt Ngay").
   - Định dạng ngày tháng: Ưu tiên hiển thị theo định dạng Việt Nam `DD/MM/YYYY` ở các bảng dữ liệu quản trị.
 
+## 5. Chú thích Code (Code Commenting Rules)
+- **Comment chi tiết, sư phạm**: Khi viết hoặc chỉnh sửa mã nguồn, luôn viết chú thích (comments) giải thích chi tiết, cụ thể bằng Tiếng Việt. Giải thích rõ ràng mục đích, luồng dữ liệu và ý nghĩa của các khối logic phức tạp để các lập trình viên mới (fresher) đọc cũng có thể dễ dàng tiếp thu và học tập.

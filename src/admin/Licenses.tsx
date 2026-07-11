@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+// Import các Component UI từ thư viện Ant Design để phục vụ xây dựng giao diện nhanh & đẹp
 import { Row, Col, Card, Statistic, Table, Tag, Button, Input, Modal, Form, Space, Popconfirm, Typography, Tooltip, Spin, message } from 'antd';
+// Import các Icon từ Ant Design để tăng tính trực quan cho các nút bấm & đề mục
 import { 
   KeyOutlined, 
   LaptopOutlined, 
@@ -12,30 +14,55 @@ import {
   UserOutlined, 
   LogoutOutlined 
 } from '@ant-design/icons';
+// Import các hooks gọi API từ themeApi (đã xây dựng bằng RTK Query)
 import { useGetLicensesQuery, useActivateLicenseMutation, useDeactivateLicenseMutation, UserLicense } from '../store/themeApi';
 
+// Giải cấu trúc (destructuring) các sub-component của Typography để code gọn hơn
 const { Title, Text } = Typography;
 
+/**
+ * Interface biểu diễn cấu trúc dữ liệu gửi lên từ form đăng ký kích hoạt key
+ */
+interface ActivateFormValues {
+  licenseKey: string;
+  domain: string;
+}
+
+/**
+ * Component chính Quản lý License dành cho quản trị viên
+ */
 const AdminLicenses: React.FC = () => {
+  // State quản lý ẩn/hiện popup Modal dùng để kích hoạt tên miền mới
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Khởi tạo đối tượng form của Antd để có thể can thiệp dữ liệu nhập và reset form dễ dàng
   const [form] = Form.useForm();
 
-  // Quản lý trạng thái Đăng nhập (Lưu vào localStorage để duy trì trạng thái khi refresh)
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  // Đọc và quản lý trạng thái đăng nhập admin từ localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('admin_logged_in') === 'true';
   });
 
-  // Fetch licenses dynamically via RTK Query
+  // Truy vấn danh sách license thời gian thực thông qua Custom Hook tự sinh của RTK Query.
+  // data: Danh sách license trả về từ server, mặc định là mảng rỗng [] nếu chưa có dữ liệu.
+  // isLoading: Trạng thái đang tải dữ liệu từ API.
+  // error: Chứa thông tin lỗi nếu cuộc gọi API thất bại.
   const { data: licenses = [], isLoading, error } = useGetLicensesQuery();
 
-  // Mutation hooks
+  // Đăng ký các mutation hooks để ghi/sửa dữ liệu:
+  // activateLicense: Hàm gửi request kích hoạt domain lên Supabase.
+  // isActivating: Biến boolean biểu diễn trạng thái đang xử lý kích hoạt để hiển thị nút Loading.
   const [activateLicense, { isLoading: isActivating }] = useActivateLicenseMutation();
+  // deactivateLicense: Hàm gửi request gỡ kết nối domain khỏi key bản quyền.
   const [deactivateLicense, { isLoading: isDeactivating }] = useDeactivateLicenseMutation();
 
-  const handleLoginSubmit = (values: any) => {
+  /**
+   * Xử lý đăng nhập bằng tài khoản admin cứng
+   */
+  const handleLoginSubmit = (values: Record<string, string>) => {
     if (values.username === 'admin' && values.password === 'abc123') {
       localStorage.setItem('admin_logged_in', 'true');
       setIsLoggedIn(true);
+      // Phát đi sự kiện toàn cục để Header (App.tsx) nhận biết được và hiển thị các menu admin
       window.dispatchEvent(new Event('admin-login-change'));
       message.success('Đăng nhập thành công với quyền Quản trị viên!');
     } else {
@@ -43,47 +70,65 @@ const AdminLicenses: React.FC = () => {
     }
   };
 
+  /**
+   * Xử lý đăng xuất tài khoản quản trị
+   */
   const handleLogout = () => {
     localStorage.removeItem('admin_logged_in');
     setIsLoggedIn(false);
+    // Phát đi sự kiện toàn cục để Header ẩn các menu admin đi ngay lập tức
     window.dispatchEvent(new Event('admin-login-change'));
     message.success('Đã đăng xuất tài khoản quản trị!');
   };
 
-  // Copy helper
+  /**
+   * Hàm tiện ích hỗ trợ sao chép key bản quyền vào khay nhớ tạm (Clipboard) của máy tính
+   */
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     message.success('Đã sao chép key bản quyền!');
   };
 
-  // Handle deactivating domain connection
+  /**
+   * Gửi yêu cầu ngắt kết nối domain của key bản quyền
+   */
   const handleDeactivate = async (licenseKey: string) => {
     try {
+      // unwrap() giúp trích xuất kết quả thực tế hoặc ném ra lỗi trực tiếp từ Promise để khối catch có thể xử lý
       await deactivateLicense({ licenseKey }).unwrap();
       message.warning('Đã ngắt kết nối domain thành công.');
-    } catch (err: any) {
-      message.error(err?.data?.error || 'Ngắt kết nối thất bại.');
+    } catch (err: unknown) {
+      const errorMsg = err && typeof err === 'object' && 'data' in err
+        ? (err as { data: { error: string } }).data?.error
+        : 'Ngắt kết nối thất bại.';
+      message.error(errorMsg);
     }
   };
 
-  // Handle adding connection (activating a domain)
-  const handleActivateConnection = async (values: { licenseKey: string; domain: string }) => {
+  /**
+   * Gửi yêu cầu kích hoạt một domain mới liên kết với key bản quyền
+   */
+  const handleActivateConnection = async (values: ActivateFormValues) => {
     try {
       await activateLicense({ licenseKey: values.licenseKey, domain: values.domain }).unwrap();
-      setIsModalOpen(false);
-      form.resetFields();
+      setIsModalOpen(false); // Đóng modal kích hoạt
+      form.resetFields();    // Reset sạch các trường nhập liệu của Form
       message.success(`Kích hoạt thành công theme cho domain ${values.domain}!`);
-    } catch (err: any) {
-      message.error(err?.data?.error || 'Kích hoạt key bản quyền thất bại.');
+    } catch (err: unknown) {
+      const errorMsg = err && typeof err === 'object' && 'data' in err
+        ? (err as { data: { error: string } }).data?.error
+        : 'Kích hoạt key bản quyền thất bại.';
+      message.error(errorMsg);
     }
   };
 
-  // Data grid structure for Licenses
+  // Cấu hình các cột (columns) hiển thị dữ liệu của thẻ bảng (Table) Ant Design
   const columns = [
     {
       title: 'Tên Theme',
       dataIndex: 'themeName',
       key: 'themeName',
+      // In đậm tên theme để tăng tính nổi bật
       render: (text: string) => <Text strong style={{ color: '#1e293b' }}>{text}</Text>,
     },
     {
@@ -95,6 +140,7 @@ const AdminLicenses: React.FC = () => {
           <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>
             {key}
           </code>
+          {/* Nút bấm sao chép nhanh key */}
           <Tooltip title="Sao chép">
             <Button
               type="text"
@@ -110,6 +156,7 @@ const AdminLicenses: React.FC = () => {
       title: 'Website Kết Nối',
       dataIndex: 'domain',
       key: 'domain',
+      // Định dạng nghiêng và đổi màu xám nếu chưa kết nối website nào
       render: (domain: string) => (
         <span style={{ fontStyle: domain === 'N/A' || !domain ? 'italic' : 'normal', color: domain === 'N/A' || !domain ? '#94a3b8' : '#1e293b' }}>
           {domain || 'N/A'}
@@ -120,6 +167,7 @@ const AdminLicenses: React.FC = () => {
       title: 'Trạng Thái',
       dataIndex: 'status',
       key: 'status',
+      // Hiển thị nhãn Tag màu sắc tương ứng theo từng trạng thái của key bản quyền
       render: (status: 'active' | 'expired' | 'suspended') => {
         let color = 'default';
         let text = 'Chưa dùng';
@@ -140,6 +188,7 @@ const AdminLicenses: React.FC = () => {
       title: 'Ngày Kích Hoạt',
       dataIndex: 'activatedAt',
       key: 'activatedAt',
+      // Chuyển đổi hiển thị định dạng ngày chuẩn Việt Nam DD/MM/YYYY
       render: (val: string) => {
         if (!val) return '-';
         const parts = val.split('-');
@@ -151,6 +200,7 @@ const AdminLicenses: React.FC = () => {
       title: 'Ngày Hết Hạn',
       dataIndex: 'expiresAt',
       key: 'expiresAt',
+      // Chuyển đổi hiển thị định dạng ngày chuẩn Việt Nam DD/MM/YYYY
       render: (val: string) => {
         if (!val) return '-';
         const parts = val.split('-');
@@ -161,9 +211,11 @@ const AdminLicenses: React.FC = () => {
     {
       title: 'Thao Tác',
       key: 'action',
-      render: (_: any, record: UserLicense) => (
+      // Nút ngắt kết nối domain hoặc kích hoạt tùy theo trạng thái hiện tại của key
+      render: (_: unknown, record: UserLicense) => (
         <Space size="middle">
           {record.status === 'active' ? (
+            // Popconfirm yêu cầu xác nhận trước khi thực hiện thao tác xóa nhạy cảm
             <Popconfirm
               title="Ngắt kết nối theme?"
               description="Bạn có chắc chắn muốn ngắt kết nối bản quyền khỏi website này không?"
@@ -180,8 +232,9 @@ const AdminLicenses: React.FC = () => {
               type="link"
               icon={<PlusOutlined />}
               onClick={() => {
+                // Điền trước key bản quyền vào trường nhập liệu của Form
                 form.setFieldsValue({ licenseKey: record.licenseKey });
-                setIsModalOpen(true);
+                setIsModalOpen(true); // Mở Modal
               }}
             >
               Kích hoạt
@@ -192,9 +245,12 @@ const AdminLicenses: React.FC = () => {
     },
   ];
 
+  // Tính số lượng key đang kích hoạt để làm số liệu thống kê
   const activeCount = licenses.filter(l => l.status === 'active').length;
 
-  // Giao diện Đăng nhập nếu chưa đăng nhập
+  /**
+   * GIAO DIỆN 1: Nếu chưa đăng nhập quyền quản trị viên, render Form Đăng Nhập
+   */
   if (!isLoggedIn) {
     return (
       <div style={{ 
@@ -232,6 +288,7 @@ const AdminLicenses: React.FC = () => {
             <Text type="secondary" style={{ fontSize: '13px' }}>Vui lòng đăng nhập để quản lý license</Text>
           </div>
 
+          {/* Form đăng nhập quản trị */}
           <Form
             name="admin_login"
             layout="vertical"
@@ -276,10 +333,13 @@ const AdminLicenses: React.FC = () => {
     );
   }
 
+  /**
+   * GIAO DIỆN 2: Giao diện quản lý license sau khi đã xác thực admin thành công
+   */
   return (
     <div style={{ paddingBottom: '40px' }}>
-      {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', marginTop: '10px' }}>
+      {/* Header đề mục trang */}
+      <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', marginTop: '10px', width: '100%' }}>
         <div>
           <Title level={2} style={{ margin: 0, fontWeight: 800 }}>
             Quản Lý Key Bản Quyền & Theme Đã Bán
@@ -299,7 +359,7 @@ const AdminLicenses: React.FC = () => {
         </Button>
       </div>
 
-      {/* Metrics Row */}
+      {/* Hàng thẻ thống kê chỉ số (Metrics cards) */}
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '24px' }}>
           <Spin tip="Đang tải dữ liệu báo cáo..." />
@@ -339,7 +399,7 @@ const AdminLicenses: React.FC = () => {
         </Row>
       )}
 
-      {/* Main Table */}
+      {/* Thẻ chứa Bảng danh sách License */}
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
@@ -363,6 +423,7 @@ const AdminLicenses: React.FC = () => {
       >
         <Table
           columns={columns}
+          // Ánh xạ id làm thuộc tính key bắt buộc cho mỗi dòng dữ liệu của bảng
           dataSource={licenses.map(lic => ({ ...lic, key: lic.id }))}
           loading={isLoading}
           pagination={false}
@@ -370,7 +431,7 @@ const AdminLicenses: React.FC = () => {
         />
       </Card>
 
-      {/* Activation Modal */}
+      {/* Modal Popup để kích hoạt tên miền mới */}
       <Modal
         title={
           <Space>
@@ -380,11 +441,11 @@ const AdminLicenses: React.FC = () => {
         }
         open={isModalOpen}
         onCancel={() => {
-          setIsModalOpen(false);
-          form.resetFields();
+          setIsModalOpen(false); // Đóng modal
+          form.resetFields();    // Reset form nhập liệu
         }}
         footer={null}
-        destroyOnClose
+        destroyOnClose // Hủy toàn bộ DOM con trong modal sau khi đóng để tránh cache form cũ
       >
         <Form
           form={form}
@@ -409,6 +470,7 @@ const AdminLicenses: React.FC = () => {
             label="Địa Chỉ Domain Website (không bao gồm http/https)"
             rules={[
               { required: true, message: 'Vui lòng nhập tên miền của bạn!' },
+              // Ràng buộc định dạng Regex kiểm tra tên miền hợp lệ (ví dụ: mydomain.com)
               {
                 pattern: /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/,
                 message: 'Tên miền không hợp lệ (Ví dụ: mysite.com)',

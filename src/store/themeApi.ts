@@ -1,40 +1,70 @@
+// Import các hàm và class từ Redux Toolkit Query để xây dựng API Layer
+// createApi: Hàm khởi tạo API service của RTK Query
+// fakeBaseQuery: Dùng khi ta không gọi API qua URL HTTP thông thường mà tự xử lý bất đồng bộ (ở đây là gọi Supabase SDK)
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
+// Import đối tượng supabase đã cấu hình để giao tiếp với cơ sở dữ liệu Supabase
 import { supabase } from '../lib/supabaseClient';
 
+/**
+ * 1. Khai báo Interface ThemeItem (Cấu trúc của một Theme WordPress)
+ * Giúp TypeScript kiểm soát chặt chẽ kiểu dữ liệu của đối tượng Theme.
+ */
 export interface ThemeItem {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  price: number;
-  image: string;
-  demoUrl: string;
-  features: string[];
-  tags: string[];
-  rating: number;
-  downloads: number;
+  id: string;          // ID duy nhất của theme
+  name: string;        // Tên theme
+  version: string;     // Phiên bản theme hiện tại (ví dụ: v1.0.0)
+  description: string; // Mô tả tính năng theme
+  price: number;       // Giá bán theme
+  image: string;       // Link ảnh preview giao diện
+  demoUrl: string;     // Đường dẫn xem thử demo trực tiếp
+  features: string[];  // Danh sách các tính năng nổi bật
+  tags: string[];      // Nhãn phân loại theme (ví dụ: Blog, Shop, Landing...)
+  rating: number;      // Điểm đánh giá trung bình từ khách hàng
+  downloads: number;   // Số lượt tải xuống/mua theme
 }
 
+/**
+ * 2. Khai báo Interface UserLicense (Cấu trúc Key Bản Quyền)
+ * Quản lý trạng thái và tên miền kết nối của từng key bản quyền mà khách hàng sở hữu.
+ */
 export interface UserLicense {
-  id: string;
-  themeId: string;
-  themeName: string;
-  licenseKey: string;
-  status: 'active' | 'expired' | 'suspended';
-  domain: string;
-  activatedAt: string;
-  expiresAt: string;
+  id: string;                             // ID bản ghi license
+  themeId: string;                        // ID của theme liên kết
+  themeName: string;                      // Tên theme tương ứng
+  licenseKey: string;                     // Mã key bản quyền (ví dụ: WPHUB-LX-ABCD-...)
+  status: 'active' | 'expired' | 'suspended'; // Trạng thái key: Đang hoạt động, Hết hạn, Tạm ngưng
+  domain: string;                         // Website đang kết nối sử dụng key này
+  activatedAt: string;                    // Ngày kích hoạt key
+  expiresAt: string;                      // Ngày hết hạn key
 }
 
+/**
+ * 3. Tạo API Service chính bằng createApi
+ * RTK Query hoạt động dựa trên cơ chế cấu hình tập trung. Nó sẽ tự động tạo ra
+ * các Custom React Hooks dựa trên các endpoints mà ta khai báo bên dưới.
+ */
 export const themeApi = createApi({
-  reducerPath: 'themeApi',
-  baseQuery: fakeBaseQuery(),
-  tagTypes: ['Themes', 'Licenses'],
+  reducerPath: 'themeApi', // Định danh reducer này trong Redux Store toàn cục
+  
+  // Dùng fakeBaseQuery vì chúng ta gọi dữ liệu qua Supabase Client SDK thay vì dùng axios/fetch thông thường
+  baseQuery: fakeBaseQuery(), 
+  
+  // Định nghĩa các thẻ quản lý Cache (Tag Types). 
+  // Dùng để đồng bộ dữ liệu: Khi thực hiện ghi/sửa dữ liệu (Mutation), ta sẽ "hủy" tag này
+  // để các câu truy vấn (Query) có cùng tag tự động tải lại dữ liệu mới nhất (Auto-refetch).
+  tagTypes: ['Themes', 'Licenses'], 
+
   endpoints: (builder) => ({
-    // Lấy danh sách theme từ bảng 'themes' trên Supabase
+    
+    /**
+     * ENDPOINT 1: Lấy danh sách toàn bộ theme đang bán
+     * Trả về: Mảng các ThemeItem[]
+     * hook tương ứng: useGetThemesQuery()
+     */
     getThemes: builder.query<ThemeItem[], void>({
       async queryFn() {
         try {
+          // Gọi Supabase truy vấn bảng 'themes', sắp xếp theo tên tăng dần
           const { data, error } = await supabase
             .from('themes')
             .select('*')
@@ -47,6 +77,7 @@ export const themeApi = createApi({
             console.log("FIRST ROW DATA:", data[0]);
           }
           
+          // Khớp nối dữ liệu thô (raw data) từ Supabase sang chuẩn cấu trúc ThemeItem của Frontend
           const mappedData: ThemeItem[] = (data || []).map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -61,8 +92,10 @@ export const themeApi = createApi({
             downloads: Number(item.downloads || 0),
           }));
 
+          // Trả về dữ liệu bọc trong trường { data } theo đúng chuẩn của RTK Query
           return { data: mappedData };
         } catch (err: any) {
+          // Trả về lỗi bọc trong trường { error }
           return { 
             error: { 
               status: 'CUSTOM_ERROR', 
@@ -71,13 +104,19 @@ export const themeApi = createApi({
           };
         }
       },
+      // Gắn tag 'Themes' cho cache này để có thể invalidate (làm mới) khi cần thiết
       providesTags: ['Themes'],
     }),
 
-    // Lấy chi tiết 1 theme bằng ID
+    /**
+     * ENDPOINT 2: Lấy thông tin chi tiết của 1 Theme bằng ID
+     * Trả về: Đối tượng ThemeItem
+     * hook tương ứng: useGetThemeDetailsQuery(id)
+     */
     getThemeDetails: builder.query<ThemeItem, string>({
       async queryFn(id) {
         try {
+          // Truy vấn Supabase lọc theo ID, lấy duy nhất 1 bản ghi (.single())
           const { data, error } = await supabase
             .from('themes')
             .select('*')
@@ -112,10 +151,15 @@ export const themeApi = createApi({
       },
     }),
 
-    // Lấy danh sách licenses liên kết với themes
+    /**
+     * ENDPOINT 3: Lấy danh sách các key bản quyền (Licenses) liên kết với Themes
+     * Trả về: Mảng các UserLicense[]
+     * hook tương ứng: useGetLicensesQuery()
+     */
     getLicenses: builder.query<UserLicense[], void>({
       async queryFn() {
         try {
+          // Gọi Supabase truy vấn bảng 'licenses' và JOIN thông tin bảng 'themes' để lấy tên theme
           const { data, error } = await supabase
             .from('licenses')
             .select(`
@@ -130,10 +174,12 @@ export const themeApi = createApi({
           const mappedData: UserLicense[] = (data || []).map((item: any) => ({
             id: item.id,
             themeId: item.theme_id,
+            // Sử dụng cú pháp an toàn để lấy tên theme sau khi JOIN
             themeName: item.themes?.name || 'Theme Không Xác Định',
             licenseKey: item.license_key,
             status: item.status,
             domain: item.domain || 'N/A',
+            // Rút gọn định dạng ngày tháng sang YYYY-MM-DD
             activatedAt: item.activated_at ? item.activated_at.split('T')[0] : '',
             expiresAt: item.expires_at ? item.expires_at.split('T')[0] : '',
           }));
@@ -148,13 +194,19 @@ export const themeApi = createApi({
           };
         }
       },
+      // Cung cấp tag 'Licenses' cho cache để tự động làm mới khi admin kích hoạt/hủy domain
       providesTags: ['Licenses'],
     }),
 
-    // Kích hoạt license trên domain cụ thể
+    /**
+     * ENDPOINT 4: Đăng ký kích hoạt license trên tên miền (domain) cụ thể
+     * Thay đổi dữ liệu -> builder.mutation
+     * hook tương ứng: useActivateLicenseMutation()
+     */
     activateLicense: builder.mutation<UserLicense, { licenseKey: string; domain: string }>({
       async queryFn({ licenseKey, domain }) {
         try {
+          // Cập nhật thông tin domain và chuyển trạng thái key sang 'active'
           const { data, error } = await supabase
             .from('licenses')
             .update({
@@ -178,13 +230,18 @@ export const themeApi = createApi({
           };
         }
       },
+      // Invalidate tag 'Licenses' -> Ép buộc query getLicenses tải lại dữ liệu mới tức thì!
       invalidatesTags: ['Licenses'],
     }),
 
-    // Ngắt kết nối / Tạm ngưng license
+    /**
+     * ENDPOINT 5: Ngắt kết nối domain khỏi key bản quyền (Deactivate/Suspended)
+     * hook tương ứng: useDeactivateLicenseMutation()
+     */
     deactivateLicense: builder.mutation<{ success: boolean }, { licenseKey: string }>({
       async queryFn({ licenseKey }) {
         try {
+          // Cập nhật xóa domain kết nối và đổi trạng thái sang tạm ngưng 'suspended'
           const { error } = await supabase
             .from('licenses')
             .update({
@@ -206,13 +263,17 @@ export const themeApi = createApi({
           };
         }
       },
+      // Làm mới danh sách Licenses khi ngắt kết nối
       invalidatesTags: ['Licenses'],
     }),
 
-    // Lưu giao dịch mua theme mới, tự sinh key bản quyền dạng 'inactive'
+    /**
+     * ENDPOINT 6: Tạo key bản quyền mới tự động khi khách đặt hàng thành công
+     * hook tương ứng: usePurchaseThemesMutation()
+     */
     purchaseThemes: builder.mutation<{ success: boolean; licenses: UserLicense[] }, { themes: { id: string; name: string }[] }>({
       async queryFn({ themes }) {
-        // Hàm tự sinh key bản quyền ngẫu nhiên dạng: WPHUB-XX-XXXX-XXXX-XXXX
+        // Hàm sinh mã key ngẫu nhiên dạng: WPHUB-XX-XXXX-XXXX-XXXX
         const generateKey = (prefix: string) => {
           const rand = () => Math.random().toString(36).substring(2, 6).toUpperCase();
           return `WPHUB-${prefix}-${rand()}-${rand()}-${rand()}`;
@@ -224,12 +285,13 @@ export const themeApi = createApi({
             return {
               theme_id: t.id,
               license_key: key,
-              status: 'inactive',
+              status: 'inactive', // Ban đầu ở trạng thái chưa dùng
               domain: 'N/A',
-              expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Hạn 1 năm
+              expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Hạn mặc định 1 năm
             };
           });
 
+          // Insert dòng mới vào bảng 'licenses' trên Supabase
           const { data, error } = await supabase
             .from('licenses')
             .insert(rows)
@@ -263,10 +325,14 @@ export const themeApi = createApi({
           };
         }
       },
+      // Invalidate licenses list cache
       invalidatesTags: ['Licenses'],
     }),
 
-    // Thêm theme mới
+    /**
+     * ENDPOINT 7: Thêm một theme mới vào cơ sở dữ liệu (Admin quản lý)
+     * hook tương ứng: useCreateThemeMutation()
+     */
     createTheme: builder.mutation<ThemeItem, Omit<ThemeItem, 'id' | 'rating' | 'downloads'>>({
       async queryFn(newTheme) {
         try {
@@ -311,10 +377,14 @@ export const themeApi = createApi({
           return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi thêm theme.' } };
         }
       },
+      // Invalidate tags 'Themes' để danh sách theme hiển thị cập nhật ngay lập tức ở giao diện chính
       invalidatesTags: ['Themes'],
     }),
 
-    // Sửa theme
+    /**
+     * ENDPOINT 8: Cập nhật thông tin theme đang có sẵn (Admin quản lý)
+     * hook tương ứng: useUpdateThemeMutation()
+     */
     updateTheme: builder.mutation<ThemeItem, Partial<ThemeItem> & { id: string }>({
       async queryFn({ id, ...updates }) {
         try {
@@ -362,7 +432,10 @@ export const themeApi = createApi({
       invalidatesTags: ['Themes'],
     }),
 
-    // Xóa theme
+    /**
+     * ENDPOINT 9: Xóa theme khỏi danh mục đang bán (Admin quản lý)
+     * hook tương ứng: useDeleteThemeMutation()
+     */
     deleteTheme: builder.mutation<{ success: boolean; id: string }, string>({
       async queryFn(id) {
         try {
@@ -383,6 +456,12 @@ export const themeApi = createApi({
   }),
 });
 
+/**
+ * 4. Xuất khẩu các Custom Hooks tự động sinh ra bởi RTK Query.
+ * Cách đặt tên hook theo chuẩn: use + [Tên endpoint] + [Query/Mutation]
+ * - query: Thích hợp cho việc đọc dữ liệu (GET), có cơ chế cache.
+ * - mutation: Thích hợp cho việc viết/sửa/xóa dữ liệu (POST, PUT, DELETE).
+ */
 export const {
   useGetThemesQuery,
   useGetThemeDetailsQuery,
