@@ -42,6 +42,11 @@ export const themeApi = createApi({
 
           if (error) throw error;
           
+          if (data && data.length > 0) {
+            console.log("RAW COLUMNS IN SUPABASE THEMES TABLE:", Object.keys(data[0]));
+            console.log("FIRST ROW DATA:", data[0]);
+          }
+          
           const mappedData: ThemeItem[] = (data || []).map((item: any) => ({
             id: item.id,
             name: item.name,
@@ -260,6 +265,121 @@ export const themeApi = createApi({
       },
       invalidatesTags: ['Licenses'],
     }),
+
+    // Thêm theme mới
+    createTheme: builder.mutation<ThemeItem, Omit<ThemeItem, 'id' | 'rating' | 'downloads'>>({
+      async queryFn(newTheme) {
+        try {
+          const { data, error } = await supabase
+            .from('themes')
+            .insert({
+              name: newTheme.name,
+              version: newTheme.version,
+              description: newTheme.description,
+              price: newTheme.price,
+              image_url: newTheme.image,
+              features: newTheme.features,
+              tags: newTheme.tags,
+              rating: 5,
+              downloads: 0
+            })
+            .select();
+
+          if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            throw new Error('Không thể thêm theme. Vui lòng kiểm tra RLS Policy (quyền INSERT) trên bảng themes ở Supabase Dashboard.');
+          }
+          
+          const inserted = data[0];
+          const mapped: ThemeItem = {
+            id: inserted.id,
+            name: inserted.name,
+            version: inserted.version,
+            description: inserted.description,
+            price: inserted.price,
+            image: inserted.image_url || inserted.image || '',
+            demoUrl: inserted.demo_url || inserted.demoUrl || '',
+            features: inserted.features || [],
+            tags: inserted.tags || [],
+            rating: Number(inserted.rating || 5),
+            downloads: Number(inserted.downloads || 0),
+          };
+
+          return { data: mapped };
+        } catch (err: any) {
+          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi thêm theme.' } };
+        }
+      },
+      invalidatesTags: ['Themes'],
+    }),
+
+    // Sửa theme
+    updateTheme: builder.mutation<ThemeItem, Partial<ThemeItem> & { id: string }>({
+      async queryFn({ id, ...updates }) {
+        try {
+          const dbUpdates: any = {};
+          if (updates.name !== undefined) dbUpdates.name = updates.name;
+          if (updates.version !== undefined) dbUpdates.version = updates.version;
+          if (updates.description !== undefined) dbUpdates.description = updates.description;
+          if (updates.price !== undefined) dbUpdates.price = updates.price;
+          if (updates.image !== undefined) dbUpdates.image_url = updates.image;
+          if (updates.features !== undefined) dbUpdates.features = updates.features;
+          if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+
+          const { data, error } = await supabase
+            .from('themes')
+            .update(dbUpdates)
+            .eq('id', id)
+            .select();
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            throw new Error('Không thể cập nhật theme. Vui lòng kiểm tra RLS Policy (quyền UPDATE) trên bảng themes ở Supabase Dashboard.');
+          }
+
+          const updated = data[0];
+          const mapped: ThemeItem = {
+            id: updated.id,
+            name: updated.name,
+            version: updated.version,
+            description: updated.description,
+            price: updated.price,
+            image: updated.image_url || updated.image || '',
+            demoUrl: updated.demo_url || updated.demoUrl || '',
+            features: updated.features || [],
+            tags: updated.tags || [],
+            rating: Number(updated.rating || 5),
+            downloads: Number(updated.downloads || 0),
+          };
+
+          return { data: mapped };
+        } catch (err: any) {
+          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi cập nhật theme.' } };
+        }
+      },
+      invalidatesTags: ['Themes'],
+    }),
+
+    // Xóa theme
+    deleteTheme: builder.mutation<{ success: boolean; id: string }, string>({
+      async queryFn(id) {
+        try {
+          const { error } = await supabase
+            .from('themes')
+            .delete()
+            .eq('id', id);
+
+          if (error) throw error;
+
+          return { data: { success: true, id } };
+        } catch (err: any) {
+          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi xóa theme.' } };
+        }
+      },
+      invalidatesTags: ['Themes'],
+    }),
   }),
 });
 
@@ -270,4 +390,7 @@ export const {
   useActivateLicenseMutation,
   useDeactivateLicenseMutation,
   usePurchaseThemesMutation,
+  useCreateThemeMutation,
+  useUpdateThemeMutation,
+  useDeleteThemeMutation,
 } = themeApi;

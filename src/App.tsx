@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography } from 'antd';
-import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined } from '@ant-design/icons';
+import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import Market from './pages/Market';
@@ -10,6 +10,8 @@ import ThemeDetail from './pages/ThemeDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Services from './pages/Services';
+import TemplatesPreview from './pages/TemplatesPreview';
+import AdminThemes from './admin/Themes';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -19,7 +21,10 @@ const App: React.FC = () => {
   const location = useLocation();
 
   // Determine current active menu item based on routing path
-  const currentKey = location.pathname === '/dashboard' ? 'dashboard' : location.pathname === '/services' ? 'services' : 'market';
+  const currentKey = 
+    location.pathname === '/dashboard' ? 'dashboard' : 
+    location.pathname === '/services' ? 'services' : 
+    location.pathname.startsWith('/admin') ? 'admin' : 'market';
 
   return (
     <ConfigProvider
@@ -113,6 +118,11 @@ const App: React.FC = () => {
                 icon: <DashboardOutlined />,
                 label: <Link to="/dashboard">License Manager</Link>,
               },
+              {
+                key: 'admin',
+                icon: <DatabaseOutlined />,
+                label: <Link to="/admin/themes">Quản trị Theme</Link>,
+              },
             ]}
           />
 
@@ -140,9 +150,11 @@ const App: React.FC = () => {
               <Route path="/" element={<Market />} />
               <Route path="/theme/:id" element={<ThemeDetail />} />
               <Route path="/services" element={<Services />} />
+              <Route path="/templates-preview" element={<TemplatesPreview />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin/themes" element={<AdminThemes />} />
             </Routes>
           </div>
         </Content>

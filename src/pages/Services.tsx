@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Button, Typography, Space, Divider, Modal } from 'antd';
-import { 
-  CheckOutlined, 
-  ThunderboltOutlined, 
-  FireOutlined, 
-  CrownOutlined, 
-  MessageOutlined, 
+import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import {
+  CheckOutlined,
+  ThunderboltOutlined,
+  FireOutlined,
+  CrownOutlined,
+  MessageOutlined,
   PhoneOutlined,
-  CheckCircleOutlined,
   CopyOutlined
 } from '@ant-design/icons';
 
@@ -23,14 +23,54 @@ interface PricingPlan {
   color: string;
 }
 
+interface DomainOption {
+  suffix: string;
+  price: number;
+  isFree: boolean;
+}
+
+interface HostingOption {
+  key: string;
+  name: string;
+  price12m: number;
+  extraPrice: number;
+  specs: string;
+}
+
+// Cấu hình danh sách tên miền mới
+const DOMAIN_OPTIONS: DomainOption[] = [
+  // Miễn phí
+  { suffix: '.top', price: 0, isFree: true },
+  { suffix: '.us', price: 0, isFree: true },
+  { suffix: '.name.vn', price: 0, isFree: true },
+  { suffix: '.io.vn', price: 0, isFree: true },
+  { suffix: '.id.vn', price: 0, isFree: true },
+  { suffix: '.website', price: 0, isFree: true },
+  { suffix: '.online', price: 0, isFree: true },
+  { suffix: '.store', price: 0, isFree: true },
+  // Tính phí thêm
+  { suffix: '.com', price: 200000, isFree: false },
+  { suffix: '.org', price: 200000, isFree: false },
+  { suffix: '.net', price: 350000, isFree: false },
+  { suffix: '.vn', price: 650000, isFree: false },
+  { suffix: '.com.vn', price: 550000, isFree: false },
+  { suffix: '.edu.vn', price: 400000, isFree: false },
+];
+
+// Cấu hình các gói hosting mới
+const HOSTING_OPTIONS: HostingOption[] = [
+  { key: 'basic01', name: 'Host Basic 01', price12m: 250000, extraPrice: 0, specs: 'CPU 2 Core / RAM 2GB / SSD 1GB' },
+  { key: 'basic02', name: 'Host Basic 02', price12m: 500000, extraPrice: 250000, specs: 'CPU 2 Core / RAM 3GB / SSD 3GB' },
+  { key: 'basic03', name: 'Host Basic 03', price12m: 1000000, extraPrice: 750000, specs: 'CPU 3 Core / RAM 3GB / SSD 6GB' },
+  { key: 'basic04', name: 'Host Basic 04', price12m: 1400000, extraPrice: 1150000, specs: 'CPU 4 Core / RAM 4GB / SSD 10GB' },
+];
+
 const getCommitments = (
-  deliveryTime: string, 
-  hostingDesc: string, 
+  deliveryTime: string,
   editorDesc: string = 'Giao diện chỉnh sửa trực quan (Sử dụng Elementor)',
   hasGsiGuarantee: boolean = true
 ) => {
   const commitments = [
-    `FREE Tên miền & Hosting ${hostingDesc} (12 tháng, hỗ trợ đuôi .com/.org/.info/.top)`,
     'Hỗ trợ dựng và quản lý tài nguyên',
     'Bảo hành 12 tháng (FREE fix tất cả lỗi do code mình gây ra)',
     `Thời gian hoàn thành (Bàn giao sau ${deliveryTime})`,
@@ -40,7 +80,7 @@ const getCommitments = (
     'FREE gói cấu hình bảo mật website',
   ];
   if (hasGsiGuarantee) {
-    commitments.push('FREE gói tối ưu điểm PageSpeed Insights (GSI > 80)');
+    commitments.push('FREE gói tối ưu điểm PageSpeed Insights (GSI > 80 khi sử dụng theme LX Landing)');
   }
   return commitments;
 };
@@ -56,7 +96,7 @@ const PLANS: PricingPlan[] = [
       'Clone giao diện từ website mẫu yêu cầu',
       'Lập trình ghép Backend WordPress dễ nhập liệu',
       'Tương thích đa thiết bị',
-      ...getCommitments('3 - 5 ngày', 'cơ bản 1G', 'Giao diện nhập liệu trực quan', false)
+      ...getCommitments('3 - 5 ngày', 'Giao diện nhập liệu trực quan', false)
     ],
   },
   {
@@ -66,71 +106,67 @@ const PLANS: PricingPlan[] = [
     icon: <ThunderboltOutlined style={{ fontSize: '28px', color: '#10b981' }} />,
     color: '#10b981',
     features: [
-      'Sử dụng giao diện theme WordPress có sẵn',
-      'Cấu hình tối đa 5 trang nội dung',
+      'Thiết kế trực tiếp trên trang wordpress dùng theme LX Landing',
+      '5 trang cơ bản: trang chủ, giới thiệu, liên hệ (có hỗ trợ Form), bài viết, danh mục bài viết',
       'Tương thích đa thiết bị',
       'Trang bài viết, sản phẩm & danh mục sử dụng template chuẩn SEO [Xem mẫu]',
-      ...getCommitments('3 - 5 ngày', 'cơ bản 1G')
+      ...getCommitments('3 - 5 ngày')
     ],
   },
   {
     title: 'Gói Phổ Biến',
-    price: 4000000,
+    price: 3000000,
     description: 'Giải pháp tối ưu cho việc mở các shop, cửa hàng bán hàng chuyên nghiệp có tích hợp giỏ hàng và thanh toán trực tuyến.',
     icon: <FireOutlined style={{ fontSize: '28px', color: '#6366f1' }} />,
     color: '#6366f1',
     isPopular: true,
     features: [
-      'Tùy chỉnh giao diện nâng cao theo yêu cầu',
-      'Tối đa 15 trang nội dung + Danh mục sản phẩm',
-      'Tích hợp công cụ SEO tiêu chuẩn',
+      'Thiết kế trực tiếp trên trang wordpress dùng theme LX Landing',
+      '10 trang cơ bản: trang chủ, giới thiệu, liên hệ (có hỗ trợ Form), bài viết, danh mục bài viết, sản phẩm, danh mục sản phẩm, giỏ hàng, thanh toán, tài khoản',
       'Hỗ trợ kết nối cổng thanh toán VNPay và SePay',
       'Trang bài viết, sản phẩm & danh mục sử dụng template chuẩn SEO [Xem mẫu]',
-      ...getCommitments('5 - 7 ngày', 'cơ bản 1G')
+      ...getCommitments('5 - 7 ngày')
     ],
   },
   {
     title: 'Gói Cao Cấp',
     price: 6000000,
-    description: 'Thiết kế độc quyền, lập trình trực tiếp từ bản vẽ thiết kế Figma (Cắt Figma sang code). Tốc độ cực hạn.',
+    description: 'Thiết kế độc quyền, lập trình trực tiếp từ bản vẽ thiết kế Figma (chuyển thiết kế Figma thành Html/css/js). Tốc độ cực hạn.',
     icon: <CrownOutlined style={{ fontSize: '28px', color: '#f59e0b' }} />,
     color: '#f59e0b',
     features: [
-      'Lập trình giao diện riêng biệt từ bản vẽ Figma (Cắt Figma)',
+      'Lập trình giao diện riêng biệt từ bản vẽ Figma (chuyển thiết kế Figma thành Html/css/js)',
+      'Clone giao diện từ website mẫu hoặc thiết kế theo yêu cầu',
       'Không giới hạn số lượng trang nội dung',
-      'Tối ưu Core Web Vitals (Đạt 95-100 điểm xanh)',
-      'Hỗ trợ cấu hình đa ngôn ngữ (Multi-language)',
-      ...getCommitments('10 - 15 ngày', 'VIP tốc độ cao 3G')
+      'Hỗ trợ cấu hình đa ngôn ngữ (+200.000 đ)',
+      'Hỗ trợ kết nối cổng thanh toán VNPay và SePay',
+      'Lập trình ghép Backend WordPress dễ nhập liệu',
+      'Tương thích đa thiết bị',
+      ...getCommitments('10 - 15 ngày')
     ],
   },
 ];
 
-const TEMPLATE_DEMOS = [
-  {
-    title: 'Template Chi Tiết Sản Phẩm (Single Product)',
-    type: 'Cửa Hàng / E-Commerce',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=60',
-    description: 'Bố cục hiện đại tối ưu tỷ lệ chuyển đổi, bao gồm ảnh phóng to, thông số kỹ thuật, đánh giá và sản phẩm liên quan.',
-    features: ['Chuẩn Schema Product', 'Tối ưu nút Mua ngay', 'Tải nhanh dưới 1.5s'],
-  },
-  {
-    title: 'Template Chi Tiết Bài Viết (Single Post)',
-    type: 'Tin Tức / Blog',
-    image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=60',
-    description: 'Tập trung vào trải nghiệm đọc của người dùng với font chữ sắc nét, thanh mục lục tự động và bài viết liên quan.',
-    features: ['Mục lục tự động (TOC)', 'Chuẩn Schema Article', 'Độ tương phản font tốt'],
-  },
-  {
-    title: 'Template Trang Danh Mục (Category Archive)',
-    type: 'Lưu Trữ / Phân Loại',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=60',
-    description: 'Bố cục dạng lưới (Grid) trực quan giúp khách hàng dễ dàng tìm kiếm và phân loại thông tin bài viết/sản phẩm.',
-    features: ['Bộ lọc Ajax thông minh', 'Phân trang mượt mà', 'Tải ảnh Lazy Load'],
-  },
-];
-
 const Services: React.FC = () => {
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // State quản lý đuôi tên miền được chọn cho từng gói
+  const [selectedDomains, setSelectedDomains] = useState<Record<string, string>>({
+    'Gói Clone & Vibe': '.top',
+    'Gói Cơ Bản': '.top',
+    'Gói Phổ Biến': '.top',
+    'Gói Cao Cấp': '.top',
+  });
+
+  // State quản lý gói hosting được chọn cho từng gói
+  const [selectedHostings, setSelectedHostings] = useState<Record<string, string>>({
+    'Gói Clone & Vibe': 'basic01',
+    'Gói Cơ Bản': 'basic01',
+    'Gói Phổ Biến': 'basic01',
+    'Gói Cao Cấp': 'basic01',
+  });
+
+  const [openModalPlan, setOpenModalPlan] = useState<PricingPlan | null>(null);
 
   return (
     <div style={{ paddingBottom: '60px' }}>
@@ -147,6 +183,27 @@ const Services: React.FC = () => {
       {/* Pricing Cards Grid */}
       <Row gutter={[16, 16]} justify="center" align="stretch" style={{ marginBottom: '48px' }}>
         {PLANS.map((plan) => {
+          const selectedSuffix = selectedDomains[plan.title] || '.top';
+          const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
+          const domainPrice = domainOpt ? domainOpt.price : 0;
+
+          const selectedHostKey = selectedHostings[plan.title] || 'basic01';
+          const hostingOpt = HOSTING_OPTIONS.find(h => h.key === selectedHostKey);
+          const hostingExtraPrice = hostingOpt ? hostingOpt.extraPrice : 0;
+
+          const totalPrice = plan.price + domainPrice + hostingExtraPrice;
+
+          // Tạo nội dung tin nhắn gửi Zalo soạn sẵn
+          const zaloMessage = `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
+          const zaloUrl = `https://zalo.me/0815483669?text=${encodeURIComponent(zaloMessage)}`;
+
+          // Hợp nhất các cam kết và các thông số được chọn động
+          const displayFeatures = [
+            `Tặng kèm ${hostingOpt?.name} (${hostingOpt?.specs})`,
+            `Hỗ trợ tên miền miễn phí đuôi ${selectedSuffix}`,
+            ...plan.features
+          ];
+
           return (
             <Col xs={24} sm={12} lg={6} key={plan.title} style={{ display: 'flex' }}>
               <Card
@@ -219,20 +276,94 @@ const Services: React.FC = () => {
                     {plan.description}
                   </Paragraph>
 
+                  {/* Giá và Tên miền & Hosting */}
                   <div style={{ marginBottom: '16px' }}>
-                    <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', display: 'block' }}>CHI PHÍ TRỌN GÓI</Text>
+                    <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
+                      TỔNG CHI PHÍ TẠM TÍNH
+                    </Text>
                     <Title level={2} style={{ margin: 0, color: plan.color, fontWeight: 800, fontSize: '26px' }}>
-                      {plan.price.toLocaleString('vi-VN')} đ
+                      {totalPrice.toLocaleString('vi-VN')} đ
                     </Title>
+
+                    <Space direction="vertical" size={0} style={{ width: '100%', marginTop: '4px' }}>
+                      {domainPrice > 0 ? (
+                        <Text type="secondary" style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
+                          • Tên miền {selectedSuffix}: +{domainPrice.toLocaleString('vi-VN')} đ
+                        </Text>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'block' }}>
+                          • Tên miền {selectedSuffix}: Miễn phí
+                        </Text>
+                      )}
+
+                      {hostingExtraPrice > 0 ? (
+                        <Text type="secondary" style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>
+                          • {hostingOpt?.name}: +{hostingExtraPrice.toLocaleString('vi-VN')} đ
+                        </Text>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'block' }}>
+                          • {hostingOpt?.name}: Miễn phí
+                        </Text>
+                      )}
+                    </Space>
+                  </div>
+
+                  {/* Dropdowns Cấu hình Tên miền & Hosting */}
+                  <div style={{ marginBottom: '16px', background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: '6px', color: '#475569' }}>
+                        Đuôi tên miền đi kèm:
+                      </Text>
+                      <Select
+                        value={selectedSuffix}
+                        onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
+                        style={{ width: '100%' }}
+                        options={DOMAIN_OPTIONS.map(d => ({
+                          value: d.suffix,
+                          label: d.isFree ? `${d.suffix} (Miễn phí)` : `${d.suffix} (+${d.price.toLocaleString('vi-VN')} đ)`
+                        }))}
+                      />
+                    </div>
+
+                    <div>
+                      <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: '6px', color: '#475569' }}>
+                        Gói Hosting (12 tháng):
+                      </Text>
+                      <Select
+                        value={selectedHostKey}
+                        onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
+                        style={{ width: '100%' }}
+                        options={HOSTING_OPTIONS.map(h => ({
+                          value: h.key,
+                          label: h.extraPrice === 0
+                            ? `${h.name} (Miễn phí)`
+                            : `${h.name} (+${h.extraPrice.toLocaleString('vi-VN')} đ)`
+                        }))}
+                      />
+                      <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '4px', color: '#64748b' }}>
+                        Specs: {hostingOpt?.specs}
+                      </Text>
+                    </div>
                   </div>
 
                   <Divider style={{ margin: '12px 0' }} />
 
                   {/* Features List */}
                   <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {plan.features.map((feat, i) => {
-                      const isFree = feat.startsWith('FREE') || feat.startsWith('MIỄN PHÍ');
-                      
+                    {displayFeatures.map((feat, i) => {
+                      const isHighlighted =
+                        feat.startsWith('FREE') ||
+                        feat.startsWith('MIỄN PHÍ') ||
+                        feat.startsWith('Tặng kèm') ||
+                        feat.startsWith('Thiết kế trực tiếp') ||
+                        feat.startsWith('5 trang cơ bản') ||
+                        feat.startsWith('10 trang cơ bản') ||
+                        feat.startsWith('Clone giao diện') ||
+                        feat.startsWith('Lập trình ghép Backend') ||
+                        feat.startsWith('Tùy chỉnh giao diện') ||
+                        feat.startsWith('Tối đa 15 trang') ||
+                        feat.startsWith('Lập trình giao diện riêng biệt');
+
                       // Render custom click popup handler
                       if (feat.includes('[Xem mẫu]')) {
                         const parts = feat.split('[Xem mẫu]');
@@ -241,11 +372,11 @@ const Services: React.FC = () => {
                             <CheckOutlined style={{ color: plan.color, fontSize: '12px', marginTop: '4px' }} />
                             <Text style={{ fontSize: '12.5px', color: '#334155', lineHeight: 1.4 }}>
                               {parts[0]}
-                              <span 
-                                onClick={() => setIsTemplateModalOpen(true)}
-                                style={{ 
-                                  color: plan.color, 
-                                  fontWeight: 700, 
+                              <span
+                                onClick={() => navigate('/templates-preview')}
+                                style={{
+                                  color: plan.color,
+                                  fontWeight: 700,
                                   textDecoration: 'underline',
                                   marginLeft: '4px',
                                   cursor: 'pointer'
@@ -263,7 +394,7 @@ const Services: React.FC = () => {
                         <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                           <CheckOutlined style={{ color: plan.color, fontSize: '12px', marginTop: '4px' }} />
                           <Text style={{ fontSize: '12.5px', color: '#334155', lineHeight: 1.4 }}>
-                            {isFree ? <strong style={{ color: plan.color }}>{feat}</strong> : feat}
+                            {isHighlighted ? <strong style={{ color: plan.color }}>{feat}</strong> : feat}
                           </Text>
                         </li>
                       );
@@ -271,12 +402,28 @@ const Services: React.FC = () => {
                   </ul>
                 </div>
 
-                <div style={{ marginTop: '16px' }}>
+                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Button
+                    type="default"
+                    size="middle"
+                    block
+                    onClick={() => setOpenModalPlan(plan)}
+                    style={{
+                      height: '38px',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      borderColor: plan.color,
+                      color: plan.color,
+                      background: `${plan.color}08`,
+                    }}
+                  >
+                    Xem Chi Tiết
+                  </Button>
                   <Button
                     type={plan.isPopular ? 'primary' : 'default'}
                     size="middle"
                     block
-                    href="https://zalo.me/0815483669"
+                    href={zaloUrl}
                     target="_blank"
                     style={{
                       height: '38px',
@@ -319,57 +466,218 @@ const Services: React.FC = () => {
         </Space>
       </Card>
 
-      {/* Template Demos Modal Popup */}
+      {/* Modal hiển thị chi tiết gói dịch vụ */}
       <Modal
-        title={<span style={{ fontWeight: 800, fontSize: '18px', color: '#1e293b' }}>Mẫu Template Bài Viết, Sản Phẩm & Danh Mục Chuẩn SEO</span>}
-        open={isTemplateModalOpen}
-        onCancel={() => setIsTemplateModalOpen(false)}
-        footer={[
-          <Button key="close" type="primary" onClick={() => setIsTemplateModalOpen(false)} style={{ borderRadius: '8px' }}>
-            Đóng
-          </Button>
-        ]}
-        width={1000}
+        title={
+          openModalPlan ? (
+            <Space align="center" style={{ paddingBottom: '4px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: `${openModalPlan.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {openModalPlan.icon}
+              </div>
+              <Text strong style={{ fontSize: '16px', display: 'block', color: '#1e293b' }}>
+                Chi Tiết Dịch Vụ - {openModalPlan.title}
+              </Text>
+            </Space>
+          ) : null
+        }
+        open={!!openModalPlan}
+        onCancel={() => setOpenModalPlan(null)}
+        footer={null}
+        width={950}
         centered
-        destroyOnClose
+        styles={{
+          body: {
+            padding: '16px 8px 8px 8px',
+          }
+        }}
       >
-        <div style={{ marginTop: '20px' }}>
-          <Row gutter={[16, 16]}>
-            {TEMPLATE_DEMOS.map((tpl, idx) => (
-              <Col xs={24} md={8} key={idx}>
-                <Card
-                  bordered
-                  cover={
-                    <div style={{ overflow: 'hidden', height: '140px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
-                      <img 
-                        alt={tpl.title} 
-                        src={tpl.image} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }} 
-                        onClick={() => window.open(tpl.image, '_blank')}
-                      />
-                    </div>
-                  }
-                  style={{ borderRadius: '12px', height: '100%', border: '1px solid rgba(0,0,0,0.06)' }}
-                  styles={{ body: { padding: '16px' } }}
+        {openModalPlan && (() => {
+          const plan = openModalPlan;
+          const selectedSuffix = selectedDomains[plan.title] || '.top';
+          const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
+          const domainPrice = domainOpt ? domainOpt.price : 0;
+
+          const selectedHostKey = selectedHostings[plan.title] || 'basic01';
+          const hostingOpt = HOSTING_OPTIONS.find(h => h.key === selectedHostKey);
+          const hostingExtraPrice = hostingOpt ? hostingOpt.extraPrice : 0;
+
+          const totalPrice = plan.price + domainPrice + hostingExtraPrice;
+
+          const displayFeatures = [
+            `Tặng kèm ${hostingOpt?.name} (${hostingOpt?.specs})`,
+            `Hỗ trợ tên miền miễn phí đuôi ${selectedSuffix}`,
+            ...plan.features
+          ];
+
+          const isCommitment = (feat: string) => {
+            const commitmentKeywords = [
+              'Hỗ trợ dựng và quản lý',
+              'Bảo hành 12 tháng',
+              'Thời gian hoàn thành',
+              'Hỗ trợ cập nhật',
+              'Giao diện nhập liệu',
+              'Giao diện chỉnh sửa',
+              'Tư vấn nhiệt tình',
+              'FREE gói cấu hình bảo mật',
+              'FREE gói tối ưu điểm PageSpeed'
+            ];
+            return commitmentKeywords.some(kw => feat.includes(kw));
+          };
+
+          const col1Features = displayFeatures.filter(f => !isCommitment(f));
+          const col2Features = displayFeatures.filter(f => isCommitment(f));
+
+          const renderFeatureList = (features: string[], titleText: string, iconColor: string) => {
+            return (
+              <div>
+                <Title level={5} style={{ marginBottom: '12px', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '6px', fontSize: '14px' }}>
+                  {titleText}
+                </Title>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {features.map((feat, i) => {
+                    const isHighlighted =
+                      feat.startsWith('FREE') ||
+                      feat.startsWith('MIỄN PHÍ') ||
+                      feat.startsWith('Tặng kèm') ||
+                      feat.startsWith('Thiết kế trực tiếp') ||
+                      feat.startsWith('5 trang cơ bản') ||
+                      feat.startsWith('10 trang cơ bản') ||
+                      feat.startsWith('Clone giao diện') ||
+                      feat.startsWith('Lập trình ghép Backend') ||
+                      feat.startsWith('Tùy chỉnh giao diện') ||
+                      feat.startsWith('Tối đa 15 trang') ||
+                      feat.startsWith('Lập trình giao diện riêng biệt');
+
+                    if (feat.includes('[Xem mẫu]')) {
+                      const parts = feat.split('[Xem mẫu]');
+                      return (
+                        <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                          <CheckOutlined style={{ color: iconColor, fontSize: '12px', marginTop: '4px' }} />
+                          <Text style={{ fontSize: '12.5px', color: '#334155', lineHeight: 1.4 }}>
+                            {parts[0]}
+                            <span
+                              onClick={() => {
+                                setOpenModalPlan(null);
+                                navigate('/templates-preview');
+                              }}
+                              style={{
+                                color: iconColor,
+                                fontWeight: 700,
+                                textDecoration: 'underline',
+                                marginLeft: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              xem mẫu
+                            </span>
+                            {parts[1]}
+                          </Text>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <CheckOutlined style={{ color: iconColor, fontSize: '12px', marginTop: '4px' }} />
+                        <Text style={{ fontSize: '12.5px', color: '#334155', lineHeight: 1.4 }}>
+                          {isHighlighted ? <strong style={{ color: iconColor }}>{feat}</strong> : feat}
+                        </Text>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          };
+
+          return (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                <div>
+                  <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
+                    Tổng Chi Phí Tạm Tính
+                  </Text>
+                  <Title level={4} style={{ margin: 0, color: plan.color, fontWeight: 800, fontSize: '20px' }}>
+                    {totalPrice.toLocaleString('vi-VN')} đ
+                  </Title>
+                  <Text type="secondary" style={{ fontSize: '11px', color: '#64748b' }}>
+                    Bao gồm: {hostingOpt?.name} & Tên miền {selectedSuffix}
+                  </Text>
+                </div>
+                <Button
+                  type="primary"
+                  size="middle"
+                  href={`https://zalo.me/0815483669?text=${encodeURIComponent(`Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`)}`}
+                  target="_blank"
+                  style={{
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    height: '38px',
+                    background: plan.color,
+                    borderColor: plan.color,
+                  }}
                 >
-                  <span style={{ color: '#6366f1', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' }}>{tpl.type}</span>
-                  <Title level={5} style={{ margin: '4px 0 8px 0', fontSize: '14px', fontWeight: 700, minHeight: '40px' }}>{tpl.title}</Title>
-                  <Paragraph type="secondary" style={{ fontSize: '12px', lineHeight: 1.5, marginBottom: '12px', minHeight: '54px' }}>
-                    {tpl.description}
-                  </Paragraph>
-                  <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px' }}>
-                    {tpl.features.map((f, i) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <CheckCircleOutlined style={{ color: '#10b981', fontSize: '12px' }} />
-                        <span>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </div>
+                  Đăng Ký Tư Vấn Ngay
+                </Button>
+              </div>
+
+              {/* Dropdowns Cấu hình Tên miền & Hosting (dàn ngang) */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                <div style={{ flex: 1, background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                  <Text strong style={{ fontSize: '11px', display: 'block', marginBottom: '4px', color: '#475569' }}>
+                    Đuôi tên miền đi kèm:
+                  </Text>
+                  <Select
+                    value={selectedSuffix}
+                    onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
+                    style={{ width: '100%' }}
+                    options={DOMAIN_OPTIONS.map(d => ({
+                      value: d.suffix,
+                      label: d.isFree ? `${d.suffix} (Miễn phí)` : `${d.suffix} (+${d.price.toLocaleString('vi-VN')} đ)`
+                    }))}
+                  />
+                </div>
+
+                <div style={{ flex: 1, background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                  <Text strong style={{ fontSize: '11px', display: 'block', marginBottom: '4px', color: '#475569' }}>
+                    Gói Hosting (12 tháng):
+                  </Text>
+                  <Select
+                    value={selectedHostKey}
+                    onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
+                    style={{ width: '100%' }}
+                    options={HOSTING_OPTIONS.map(h => ({
+                      value: h.key,
+                      label: h.extraPrice === 0
+                        ? `${h.name} (Miễn phí)`
+                        : `${h.name} (+${h.extraPrice.toLocaleString('vi-VN')} đ)`
+                    }))}
+                  />
+                  <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginTop: '2px', color: '#64748b' }}>
+                    Specs: {hostingOpt?.specs}
+                  </Text>
+                </div>
+              </div>
+
+              <Row gutter={24}>
+                <Col span={12}>
+                  {renderFeatureList(col1Features, 'Cấu Hình & Tính Năng', plan.color)}
+                </Col>
+                <Col span={12}>
+                  {renderFeatureList(col2Features, 'Cam Kết Dịch Vụ', plan.color)}
+                </Col>
+              </Row>
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );
