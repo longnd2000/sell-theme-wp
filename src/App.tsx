@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography } from 'antd';
-import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography, Drawer } from 'antd';
+import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined, MenuOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import Market from './pages/Market';
@@ -17,6 +17,8 @@ const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const App: React.FC = () => {
+  // Trạng thái đóng/mở Drawer menu trên di động
+  const [drawerVisible, setDrawerVisible] = useState(false);
   // Lấy danh sách sản phẩm trong Giỏ hàng từ Redux Store toàn cục
   const cart = useSelector((state: RootState) => state.themeUI.cart);
   // Sử dụng hook useLocation từ react-router-dom để lấy thông tin đường dẫn URL hiện tại
@@ -111,23 +113,15 @@ const App: React.FC = () => {
               <Title level={4} style={{ margin: 0, fontWeight: 700, lineHeight: 1, background: 'linear-gradient(to right, #6366f1, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 WPHub
               </Title>
-              <Text type="secondary" style={{ fontSize: '10px', display: 'block', marginTop: '2px' }}>
+              <Text type="secondary" className="logo-subtitle" style={{ fontSize: '10px', display: 'block', marginTop: '2px' }}>
                 THEME HUB & LICENSE MANAGER
               </Text>
             </div>
           </Link>
 
-          <Menu
-            mode="horizontal"
-            selectedKeys={[currentKey]}
-            style={{
-              flex: 1,
-              justifyContent: 'flex-end',
-              background: 'transparent',
-              borderBottom: 'none',
-              minWidth: '240px',
-            }}
-            items={[
+          {/* Định nghĩa các mục menu dùng chung cho cả Bản Desktop và Bản Mobile Drawer */}
+          {(() => {
+            const menuItems = [
               {
                 key: 'services',
                 icon: <SettingOutlined />,
@@ -148,28 +142,79 @@ const App: React.FC = () => {
                 icon: <DatabaseOutlined />,
                 label: <Link to="/admin/themes">Quản trị Theme</Link>,
               },
-            ].filter(Boolean) as any}
-          />
+            ].filter(Boolean) as any;
 
-          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '16px' }}>
-            <Badge count={cart.length} offset={[-2, 2]} color="#ef4444">
-              <Link to="/cart" style={{ display: 'flex', alignItems: 'center' }}>
-                <Button
-                  type="text"
-                  shape="circle"
-                  icon={<ShoppingCartOutlined style={{ fontSize: '20px' }} />}
+            return (
+              <>
+                {/* Menu ngang dành riêng cho màn hình Desktop (Máy tính) */}
+                <Menu
+                  mode="horizontal"
+                  selectedKeys={[currentKey]}
+                  className="desktop-menu"
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    flex: 1,
+                    justifyContent: 'flex-end',
+                    background: 'transparent',
+                    borderBottom: 'none',
                   }}
+                  items={menuItems}
                 />
-              </Link>
-            </Badge>
-          </div>
+
+                {/* Nút bấm giỏ hàng & nút Hamburger Menu (Mobile) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '16px' }}>
+                  <Badge count={cart.length} offset={[-2, 2]} color="#ef4444">
+                    <Link to="/cart" style={{ display: 'flex', alignItems: 'center' }}>
+                      <Button
+                        type="text"
+                        shape="circle"
+                        icon={<ShoppingCartOutlined style={{ fontSize: '20px' }} />}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      />
+                    </Link>
+                  </Badge>
+
+                  {/* Nút Hamburger bật Drawer trên Mobile */}
+                  <Button
+                    type="text"
+                    shape="circle"
+                    className="mobile-menu-btn"
+                    icon={<MenuOutlined style={{ fontSize: '20px' }} />}
+                    onClick={() => setDrawerVisible(true)}
+                  />
+                </div>
+
+                {/* Drawer Menu trượt dọc dành riêng cho thiết bị di động */}
+                <Drawer
+                  title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ThunderboltOutlined style={{ color: '#6366f1', fontSize: '18px' }} />
+                      <span style={{ fontWeight: 700 }}>Menu</span>
+                    </div>
+                  }
+                  placement="right"
+                  onClose={() => setDrawerVisible(false)}
+                  open={drawerVisible}
+                  width={260}
+                  styles={{ body: { padding: 0 } }}
+                >
+                  <Menu
+                    mode="vertical"
+                    selectedKeys={[currentKey]}
+                    onClick={() => setDrawerVisible(false)}
+                    style={{ borderRight: 'none' }}
+                    items={menuItems}
+                  />
+                </Drawer>
+              </>
+            );
+          })()}
         </Header>
 
-        <Content style={{ padding: '24px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
+        <Content className="main-content-layout" style={{ maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
           <div className="animate-fade-in">
             <Routes>
               <Route path="/" element={<Services />} />

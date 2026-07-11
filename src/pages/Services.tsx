@@ -252,7 +252,7 @@ const Services: React.FC = () => {
     <div style={{ paddingBottom: '60px' }}>
       {/* Header section */}
       <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '20px' }}>
-        <Title level={1} style={{ margin: 0, fontWeight: 800, fontSize: '36px' }}>
+        <Title level={1} className="services-main-title" style={{ margin: 0, fontWeight: 800 }}>
           Dịch Vụ Thiết Kế Website Chuyên Nghiệp
         </Title>
         <Paragraph style={{ fontSize: '16px', color: '#64748b', marginTop: '12px', maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto', marginBottom: '24px' }}>
@@ -260,118 +260,50 @@ const Services: React.FC = () => {
         </Paragraph>
 
         {/* Bảng đếm ngược thời gian khuyến mãi khẩn cấp tạo hiệu ứng FOMO mạnh */}
-        <div 
-          style={{ 
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', // Nền đen xám kim loại siêu sang
-            color: '#fff', 
-            padding: '24px 32px', 
-            borderRadius: '24px', 
-            maxWidth: '800px', 
-            margin: '0 auto', 
-            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.12)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '16px',
-          }}
-        >
+        <div className="countdown-banner">
           {/* Tiêu đề chương trình */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '16px', fontWeight: 800 }}>
-            <FireOutlined className="animate-pulse" style={{ fontSize: '22px' }} />
-            <span style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b' }}>
+            <FireOutlined className="animate-pulse" style={{ fontSize: '20px' }} />
+            <span className="countdown-title-text">
               CHƯƠNG TRÌNH ƯU ĐÃI LỚN ĐẾN 30% - HẠN CHÓT {getLastDayOfMonthString()}!
             </span>
           </div>
           
           {/* Hàng các ô đếm ngược (Ngày : Giờ : Phút : Giây) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="countdown-row">
             {/* Ô Số Ngày */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', 
-                color: '#fff', 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '16px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontSize: '28px', 
-                fontWeight: 900, 
-                fontFamily: 'monospace', 
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)' 
-              }}>
+              <div className="countdown-box">
                 {duration.days.toString().padStart(2, '0')}
               </div>
               <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Ngày</span>
             </div>
 
-            <span style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444', marginTop: '-20px' }}>:</span>
+            <span className="countdown-separator">:</span>
 
             {/* Ô Số Giờ */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', 
-                color: '#fff', 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '16px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontSize: '28px', 
-                fontWeight: 900, 
-                fontFamily: 'monospace', 
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)' 
-              }}>
+              <div className="countdown-box">
                 {duration.hours.toString().padStart(2, '0')}
               </div>
               <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Giờ</span>
             </div>
 
-            <span style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444', marginTop: '-20px' }}>:</span>
+            <span className="countdown-separator">:</span>
 
             {/* Ô Số Phút */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', 
-                color: '#fff', 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '16px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontSize: '28px', 
-                fontWeight: 900, 
-                fontFamily: 'monospace', 
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)' 
-              }}>
+              <div className="countdown-box">
                 {duration.minutes.toString().padStart(2, '0')}
               </div>
               <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Phút</span>
             </div>
 
-            <span style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444', marginTop: '-20px' }}>:</span>
+            <span className="countdown-separator">:</span>
 
             {/* Ô Số Giây */}
             <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', 
-                color: '#fff', 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '16px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                fontSize: '28px', 
-                fontWeight: 900, 
-                fontFamily: 'monospace', 
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.25)' 
-              }}>
+              <div className="countdown-box">
                 {duration.seconds.toString().padStart(2, '0')}
               </div>
               <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginTop: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Giây</span>
@@ -385,9 +317,10 @@ const Services: React.FC = () => {
       </div>
 
       {/* Container của Slider (Carousel) kèm theo các nút điều hướng Left/Right */}
-      <div style={{ position: 'relative', padding: '0 40px', marginBottom: '48px' }}>
+      <div className="pricing-carousel-container">
         {/* Nút lướt sang Trái */}
         <Button
+          className="pricing-carousel-arrow"
           shape="circle"
           icon={<LeftOutlined />}
           onClick={() => carouselRef.current?.prev()}
@@ -409,6 +342,7 @@ const Services: React.FC = () => {
 
         {/* Nút lướt sang Phải */}
         <Button
+          className="pricing-carousel-arrow"
           shape="circle"
           icon={<RightOutlined />}
           onClick={() => carouselRef.current?.next()}
@@ -485,8 +419,8 @@ const Services: React.FC = () => {
                 <Card
                   hoverable
                   bordered={false}
+                  className="pricing-card"
                   style={{
-                    margin: '16px 12px 24px 12px',
                     borderRadius: '24px',
                     boxShadow: plan.isPopular ? '0 12px 30px rgba(99, 102, 241, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.03)',
                     border: plan.isPopular ? '2px solid #6366f1' : '1px solid rgba(0,0,0,0.04)',
@@ -736,21 +670,27 @@ const Services: React.FC = () => {
         style={{
           borderRadius: '20px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.01)',
-          padding: '24px',
+          padding: '20px 16px',
           textAlign: 'center',
           background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(245, 158, 11, 0.02) 100%)',
           border: '1px solid rgba(0,0,0,0.03)',
         }}
       >
-        <Space size="large" wrap justify="center">
-          <Text strong style={{ fontSize: '15px' }}><Space><PhoneOutlined /> Hotline tư vấn nhanh: 0815.483.669</Space></Text>
-          <Divider type="vertical" style={{ background: '#d9d9d9', height: '20px' }} />
-          <Text strong style={{ fontSize: '15px' }}>
-            <Space>
-              <MessageOutlined /> Zalo hỗ trợ: <a href="https://zalo.me/0815483669" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>zalo.me/0815483669</a>
-            </Space>
-          </Text>
-        </Space>
+        <div className="trust-row-container">
+          <div className="trust-item">
+            <PhoneOutlined style={{ color: '#6366f1', fontSize: '16px' }} />
+            <Text strong style={{ fontSize: '14.5px', color: '#1e293b' }}>
+              Hotline tư vấn nhanh: <span style={{ color: '#6366f1' }}>0815.483.669</span>
+            </Text>
+          </div>
+          <Divider className="trust-divider" type="vertical" style={{ background: '#cbd5e1', height: '20px', margin: 0 }} />
+          <div className="trust-item">
+            <MessageOutlined style={{ color: '#10b981', fontSize: '16px' }} />
+            <Text strong style={{ fontSize: '14.5px', color: '#1e293b' }}>
+              Zalo hỗ trợ: <a href="https://zalo.me/0815483669" target="_blank" rel="noreferrer" style={{ color: '#10b981', textDecoration: 'underline' }}>zalo.me/0815483669</a>
+            </Text>
+          </div>
+        </div>
       </Card>
 
       {/* Modal hiển thị chi tiết gói dịch vụ */}
@@ -886,7 +826,7 @@ const Services: React.FC = () => {
 
           return (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+              <div className="modal-header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #f1f5f9', gap: '12px' }}>
                 <div>
                   <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
                     Tổng Chi Phí Tạm Tính
@@ -927,33 +867,37 @@ const Services: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Dropdowns Cấu hình Tên miền & Hosting (dàn ngang) */}
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-                <div style={{ flex: 1, background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-                  <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>Tên miền:</Text>
-                  <Select
-                    value={selectedSuffix}
-                    onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
-                    style={{ width: '100%' }}
-                    options={DOMAIN_OPTIONS.map(d => ({
-                      value: d.suffix,
-                      label: `${d.suffix} ${d.isFree ? '(Miễn phí)' : `(+${d.price.toLocaleString('vi-VN')} đ)`}`
-                    }))}
-                  />
-                </div>
-                <div style={{ flex: 1, background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-                  <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>SSD Hosting (12 tháng):</Text>
-                  <Select
-                    value={selectedHostings[plan.title] || 'pro01'}
-                    onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
-                    style={{ width: '100%' }}
-                    options={HOSTING_OPTIONS.map(h => ({
-                      value: h.key,
-                      label: `${h.name} ${h.extraPrice === 0 ? '(Miễn phí)' : `(+${h.extraPrice.toLocaleString('vi-VN')} đ)`}`
-                    }))}
-                  />
-                </div>
-              </div>
+              {/* Dropdowns Cấu hình Tên miền & Hosting */}
+              <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+                <Col xs={24} sm={12}>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9', height: '100%' }}>
+                    <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>Tên miền:</Text>
+                    <Select
+                      value={selectedSuffix}
+                      onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
+                      style={{ width: '100%' }}
+                      options={DOMAIN_OPTIONS.map(d => ({
+                        value: d.suffix,
+                        label: `${d.suffix} ${d.isFree ? '(Miễn phí)' : `(+${d.price.toLocaleString('vi-VN')} đ)`}`
+                      }))}
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9', height: '100%' }}>
+                    <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>SSD Hosting (12 tháng):</Text>
+                    <Select
+                      value={selectedHostings[plan.title] || 'pro01'}
+                      onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
+                      style={{ width: '100%' }}
+                      options={HOSTING_OPTIONS.map(h => ({
+                        value: h.key,
+                        label: `${h.name} ${h.extraPrice === 0 ? '(Miễn phí)' : `(+${h.extraPrice.toLocaleString('vi-VN')} đ)`}`
+                      }))}
+                    />
+                  </div>
+                </Col>
+              </Row>
 
               <Row gutter={[24, 24]}>
                 <Col xs={24} md={12}>
