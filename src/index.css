@@ -108,3 +108,18 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Equal Height CSS Rules for Ant Design Carousel (Slick) */
+.ant-carousel .slick-track {
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.ant-carousel .slick-slide {
+  height: auto !important;
+}
+
+.ant-carousel .slick-slide > div {
+  height: 100% !important;
+  display: flex !important;
+}
