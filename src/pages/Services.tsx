@@ -13,7 +13,8 @@ import {
   CopyOutlined,
   RocketOutlined,
   LeftOutlined,
-  RightOutlined
+  RightOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
@@ -37,6 +38,28 @@ interface HostingOption {
   extraPrice: number;
   specs: string;
 }
+
+/**
+ * Interface cấu trúc dữ liệu cho mỗi tùy chọn dịch vụ mở rộng thêm
+ */
+interface ExtraServiceOption {
+  key: string;
+  name: string;
+  price: number;
+  isStoreOnly?: boolean;
+}
+
+// Danh sách các dịch vụ mở rộng chọn thêm
+const EXTRA_SERVICES: ExtraServiceOption[] = [
+  { key: 'lang', name: 'Cài đặt đa ngôn ngữ', price: 100000 },
+  { key: 'affiliate', name: 'Affiliate (Tiếp thị liên kết)', price: 100000, isStoreOnly: true },
+  { key: 'wallet', name: 'Ví điện tử', price: 200000, isStoreOnly: true },
+  { key: 'ordermng', name: 'Quản lý đơn hàng và thống kê cao cấp', price: 100000, isStoreOnly: true },
+  { key: 'pdfinvoice', name: 'Xuất hóa đơn PDF / In máy', price: 100000, isStoreOnly: true },
+  { key: 'flashsale', name: 'Flash Sale (Giờ vàng giá sốc)', price: 200000, isStoreOnly: true },
+  { key: 'gglogin', name: 'Đăng nhập / Đăng ký bằng Google', price: 100000, isStoreOnly: true },
+  { key: 'telesync', name: 'Gửi thông tin đơn hàng qua Tele', price: 50000, isStoreOnly: true },
+];
 
 /**
  * Interface cấu trúc dữ liệu cho mỗi gói dịch vụ thiết kế website
@@ -226,6 +249,18 @@ const Services: React.FC = () => {
   // State quản lý trạng thái đang gửi form để tránh click liên tục nhiều lần (double submit)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State quản lý các dịch vụ mở rộng được chọn cho từng gói
+  const [selectedExtras, setSelectedExtras] = useState<Record<string, string[]>>({
+    'Gói Clone & Vibe': [],
+    'Gói Landing Page': [],
+    'Gói Cơ Bản': [],
+    'Gói Bán Hàng': [],
+    'Gói Cao Cấp': [],
+  });
+
+  // State điều khiển gói đang được mở popup chọn dịch vụ mở rộng
+  const [activeExtraPlan, setActiveExtraPlan] = useState<PricingPlan | null>(null);
+
   // Hàm tính toán số giây còn lại từ thời điểm hiện tại đến cuối tháng hiện tại (23:59:59 của ngày cuối tháng)
   const getSecondsToEndOfMonth = () => {
     const now = new Date();
@@ -246,6 +281,7 @@ const Services: React.FC = () => {
       `<b>🌐 Tên miền đăng ký:</b> ${data.domain}\n` +
       `<b>ℹ️ Chi tiết tên miền:</b> ${data.domainDetail}\n` +
       `<b>🚀 Gói Hosting đi kèm:</b> ${data.hostingDetail}\n` +
+      `<b>➕ Dịch vụ mở rộng:</b> ${data.extrasDetail}\n` +
       `<b>📱 Số Zalo:</b> ${data.zaloPhone}\n` +
       `<b>💼 Lĩnh vực:</b> ${data.websiteField}\n` +
       `<b>💰 Tạm tính:</b> ${data.price.toLocaleString('vi-VN')} đ\n` +
@@ -462,16 +498,27 @@ const Services: React.FC = () => {
             const basePrice = isOwned ? (plan.price - 200000) : plan.price;
             const baseOriginalPrice = isOwned ? ((plan.originalPrice || plan.price) - 200000) : (plan.originalPrice || plan.price);
 
-            const totalPrice = basePrice + domainPrice + hostingExtraPrice;
-            const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice;
+            const extraServicesPrice = (selectedExtras[plan.title] || []).reduce((sum, key) => {
+              const svc = EXTRA_SERVICES.find(s => s.key === key);
+              return sum + (svc ? svc.price : 0);
+            }, 0);
+
+            const totalPrice = basePrice + domainPrice + hostingExtraPrice + extraServicesPrice;
+            const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice + extraServicesPrice;
             const discountPercent = plan.originalPrice 
               ? Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100) 
               : 0;
 
+            const selectedExtrasNames = (selectedExtras[plan.title] || [])
+              .map(key => EXTRA_SERVICES.find(s => s.key === key)?.name)
+              .filter(Boolean)
+              .join(', ');
+            const extrasMessagePart = selectedExtrasNames ? `, kèm dịch vụ thêm: ${selectedExtrasNames}` : '';
+
             // Tạo nội dung tin nhắn gửi Zalo soạn sẵn
             const zaloMessage = isOwned
-              ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
-              : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
+              ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}${extrasMessagePart}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
+              : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}${extrasMessagePart}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
             const zaloUrl = `https://zalo.me/0815483669?text=${encodeURIComponent(zaloMessage)}`;
 
             // Hợp nhất các cam kết và các thông số được chọn động
@@ -717,6 +764,49 @@ const Services: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Dịch vụ mở rộng (Chọn thêm) */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <Button
+                        type="dashed"
+                        block
+                        onClick={() => setActiveExtraPlan(plan)}
+                        icon={<PlusOutlined />}
+                        style={{
+                          height: '38px',
+                          borderRadius: '12px',
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          color: plan.color,
+                          borderColor: plan.color,
+                          background: `${plan.color}03`,
+                        }}
+                      >
+                        {selectedExtras[plan.title]?.length > 0 
+                          ? `Đã chọn ${selectedExtras[plan.title].length} dịch vụ mở rộng`
+                          : 'Dịch vụ mở rộng (Chọn thêm)'
+                        }
+                      </Button>
+                      {/* Hiển thị các tag tính năng đã chọn nếu có */}
+                      {selectedExtras[plan.title]?.length > 0 && (
+                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {selectedExtras[plan.title].map(key => {
+                            const svc = EXTRA_SERVICES.find(s => s.key === key);
+                            return svc ? (
+                              <Tag key={key} closable onClose={(e) => {
+                                e.preventDefault();
+                                setSelectedExtras(prev => ({
+                                  ...prev,
+                                  [plan.title]: prev[plan.title].filter(k => k !== key)
+                                }));
+                              }} color="purple" style={{ fontSize: '10.5px', borderRadius: '4px', margin: 0 }}>
+                                {svc.name}
+                              </Tag>
+                            ) : null;
+                          })}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Tạm ẩn danh sách tính năng dài dòng trên slide card (đã hiển thị chi tiết trong Modal) */}
                   </div>
 
@@ -807,6 +897,125 @@ const Services: React.FC = () => {
         </div>
       </Card>
 
+      {/* Modal lựa chọn Dịch vụ mở rộng (Chọn thêm) */}
+      <Modal
+        title={
+          activeExtraPlan ? (
+            <Space align="center" style={{ paddingBottom: '4px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: `${activeExtraPlan.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <PlusOutlined style={{ color: activeExtraPlan.color, fontSize: '16px' }} />
+              </div>
+              <Text strong style={{ fontSize: '16px', display: 'block', color: '#1e293b' }}>
+                Chọn Dịch Vụ Mở Rộng - {activeExtraPlan.title}
+              </Text>
+            </Space>
+          ) : null
+        }
+        open={!!activeExtraPlan}
+        onCancel={() => setActiveExtraPlan(null)}
+        footer={[
+          <Button 
+            key="ok" 
+            type="primary" 
+            onClick={() => setActiveExtraPlan(null)} 
+            style={{ 
+              borderRadius: '8px', 
+              background: activeExtraPlan?.color, 
+              borderColor: activeExtraPlan?.color,
+              fontWeight: 600,
+              padding: '0 24px',
+              height: '38px'
+            }}
+          >
+            Đồng ý
+          </Button>
+        ]}
+        centered
+        width={500}
+        zIndex={1100}
+      >
+        {activeExtraPlan && (() => {
+          const plan = activeExtraPlan;
+          const currentSelected = selectedExtras[plan.title] || [];
+          
+          const handleToggle = (key: string) => {
+            setSelectedExtras(prev => {
+              const list = prev[plan.title] || [];
+              if (list.includes(key)) {
+                return { ...prev, [plan.title]: list.filter(k => k !== key) };
+              } else {
+                return { ...prev, [plan.title]: [...list, key] };
+              }
+            });
+          };
+
+          const isStorePlan = plan.title === 'Gói Bán Hàng' || plan.title === 'Gói Cao Cấp';
+          const availableServices = EXTRA_SERVICES.filter(svc => !svc.isStoreOnly || isStorePlan);
+
+          return (
+            <div style={{ padding: '12px 0 4px 0' }}>
+              <Paragraph style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+                Vui lòng tích chọn các tính năng, giải pháp nâng cấp bạn mong muốn tích hợp thêm cho website của mình:
+              </Paragraph>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '4px' }}>
+                {availableServices.map(svc => {
+                  const isChecked = currentSelected.includes(svc.key);
+                  return (
+                    <div 
+                      key={svc.key} 
+                      onClick={() => handleToggle(svc.key)}
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '12px 16px', 
+                        background: isChecked ? `${plan.color}08` : '#f8fafc', 
+                        borderRadius: '12px', 
+                        border: isChecked ? `1.5px solid ${plan.color}` : '1.5px solid #f1f5f9',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        userSelect: 'none'
+                      }}
+                      className="extra-service-item"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {/* Custom checkbox box */}
+                        <div style={{ 
+                          width: '18px', 
+                          height: '18px', 
+                          border: isChecked ? `2px solid ${plan.color}` : '2px solid #cbd5e1', 
+                          borderRadius: '4px',
+                          background: isChecked ? plan.color : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginRight: '12px',
+                          transition: 'all 0.15s'
+                        }}>
+                          {isChecked && <CheckOutlined style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }} />}
+                        </div>
+                        <span style={{ fontWeight: 650, color: '#1e293b', fontSize: '13.5px' }}>{svc.name}</span>
+                      </div>
+                      <Tag color={isChecked ? 'purple' : 'default'} style={{ fontSize: '12.5px', fontWeight: 700, borderRadius: '6px', margin: 0, padding: '2px 8px' }}>
+                        +{svc.price.toLocaleString('vi-VN')} đ
+                      </Tag>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* Modal hiển thị chi tiết gói dịch vụ */}
       <Modal
         title={
@@ -854,15 +1063,26 @@ const Services: React.FC = () => {
           const basePrice = isOwned ? (plan.price - 200000) : plan.price;
           const baseOriginalPrice = isOwned ? ((plan.originalPrice || plan.price) - 200000) : (plan.originalPrice || plan.price);
 
-          const totalPrice = basePrice + domainPrice + hostingExtraPrice;
-          const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice;
+          const extraServicesPrice = (selectedExtras[plan.title] || []).reduce((sum, key) => {
+            const svc = EXTRA_SERVICES.find(s => s.key === key);
+            return sum + (svc ? svc.price : 0);
+          }, 0);
+
+          const totalPrice = basePrice + domainPrice + hostingExtraPrice + extraServicesPrice;
+          const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice + extraServicesPrice;
           const discountPercent = plan.originalPrice 
             ? Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100) 
             : 0;
 
+          const selectedExtrasNames = (selectedExtras[plan.title] || [])
+            .map(key => EXTRA_SERVICES.find(s => s.key === key)?.name)
+            .filter(Boolean)
+            .join(', ');
+          const extrasMessagePart = selectedExtrasNames ? `, kèm dịch vụ thêm: ${selectedExtrasNames}` : '';
+
           const zaloMessage = isOwned 
-            ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
-            : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
+            ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}${extrasMessagePart}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
+            : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}${extrasMessagePart}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
           const zaloUrl = `https://zalo.me/0815483669?text=${encodeURIComponent(zaloMessage)}`;
 
           const displayFeatures = isOwned ? plan.features : [
@@ -1062,6 +1282,49 @@ const Services: React.FC = () => {
                 </Col>
               </Row>
 
+              {/* Dịch vụ mở rộng (Chọn thêm) */}
+              <div style={{ marginBottom: '16px' }}>
+                <Button
+                  type="dashed"
+                  block
+                  onClick={() => setActiveExtraPlan(plan)}
+                  icon={<PlusOutlined />}
+                  style={{
+                    height: '38px',
+                    borderRadius: '12px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: plan.color,
+                    borderColor: plan.color,
+                    background: `${plan.color}03`,
+                  }}
+                >
+                  {selectedExtras[plan.title]?.length > 0 
+                    ? `Đã chọn ${selectedExtras[plan.title].length} dịch vụ mở rộng`
+                    : 'Dịch vụ mở rộng (Chọn thêm)'
+                  }
+                </Button>
+                {/* Hiển thị các tag tính năng đã chọn nếu có */}
+                {selectedExtras[plan.title]?.length > 0 && (
+                  <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {selectedExtras[plan.title].map(key => {
+                      const svc = EXTRA_SERVICES.find(s => s.key === key);
+                      return svc ? (
+                        <Tag key={key} closable onClose={(e) => {
+                          e.preventDefault();
+                          setSelectedExtras(prev => ({
+                            ...prev,
+                            [plan.title]: prev[plan.title].filter(k => k !== key)
+                          }));
+                        }} color="purple" style={{ fontSize: '10.5px', borderRadius: '4px', margin: 0 }}>
+                          {svc.name}
+                        </Tag>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+
               <Row gutter={[24, 24]}>
                 <Col xs={24} md={12}>
                   {renderFeatureList(col1Features, 'TÍNH NĂNG GIAO DIỆN & KỸ THUẬT', plan.color)}
@@ -1121,11 +1384,21 @@ const Services: React.FC = () => {
 
             setIsSubmitting(true);
             
+            const extraServicesPrice = (selectedExtras[plan.title] || []).reduce((sum, key) => {
+              const svc = EXTRA_SERVICES.find(s => s.key === key);
+              return sum + (svc ? svc.price : 0);
+            }, 0);
+
+            const selectedExtrasNames = (selectedExtras[plan.title] || [])
+              .map(key => EXTRA_SERVICES.find(s => s.key === key)?.name)
+              .filter(Boolean)
+              .join(', ');
+
             // Tính toán chi phí tạm tính để truyền sang popup kết quả
             const domainPrice = isOwned ? 0 : (DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix)?.price || 0);
             const hostingExtraPrice = isOwned ? 0 : (HOSTING_OPTIONS.find(h => h.key === (selectedHostings[plan.title] || 'basic01'))?.extraPrice || 0);
             const basePrice = isOwned ? (plan.price - 200000) : plan.price;
-            const finalPrice = basePrice + domainPrice + hostingExtraPrice;
+            const finalPrice = basePrice + domainPrice + hostingExtraPrice + extraServicesPrice;
 
             // Tính toán chi tiết đuôi tên miền & hosting
             let domainDetail = '';
@@ -1156,6 +1429,7 @@ const Services: React.FC = () => {
               domain: isOwned ? 'Đã có sẵn (Tự chuẩn bị)' : `${values.domainPrefix}${selectedSuffix}`,
               domainDetail,
               hostingDetail,
+              extrasDetail: selectedExtrasNames || 'Không chọn',
               zaloPhone: values.zaloPhone,
               websiteField: values.websiteField,
               notes: values.notes || 'Không có',
@@ -1178,10 +1452,14 @@ const Services: React.FC = () => {
           };
 
           // Tính toán chi phí tạm tính để hiển thị trên Form
+          const extraServicesPrice = (selectedExtras[plan.title] || []).reduce((sum, key) => {
+            const svc = EXTRA_SERVICES.find(s => s.key === key);
+            return sum + (svc ? svc.price : 0);
+          }, 0);
           const domainPrice = isOwned ? 0 : (DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix)?.price || 0);
           const hostingExtraPrice = isOwned ? 0 : (HOSTING_OPTIONS.find(h => h.key === (selectedHostings[plan.title] || 'basic01'))?.extraPrice || 0);
           const basePrice = isOwned ? (plan.price - 200000) : plan.price;
-          const finalPrice = basePrice + domainPrice + hostingExtraPrice;
+          const finalPrice = basePrice + domainPrice + hostingExtraPrice + extraServicesPrice;
 
           return (
             <div style={{ marginTop: '16px' }}>
@@ -1314,6 +1592,12 @@ const Services: React.FC = () => {
                 <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>CHỦ ĐỀ WEBSITE</Text>
                 <Text strong style={{ fontSize: '14px', color: '#1e293b' }}>{registerSummary.websiteField}</Text>
               </div>
+              {registerSummary.extrasDetail !== 'Không chọn' && (
+                <div>
+                  <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>DỊCH VỤ MỞ RỘNG</Text>
+                  <Text strong style={{ fontSize: '13.5px', color: '#1e293b' }}>{registerSummary.extrasDetail}</Text>
+                </div>
+              )}
               <div>
                 <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>TỔNG CHI PHÍ TẠM TÍNH</Text>
                 <Text strong style={{ fontSize: '15px', color: '#ef4444' }}>{registerSummary.price.toLocaleString('vi-VN')} đ</Text>
