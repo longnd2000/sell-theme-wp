@@ -101,11 +101,12 @@ const getCommitments = (timeFrame: string, editor = 'Giao diện Elementor Pro c
 const PLANS: PricingPlan[] = [
   {
     title: 'Gói Landing Page',
-    price: 900000,
-    originalPrice: 1200000, // Chiết khấu 25%
+    price: 999000,
+    originalPrice: 1350000, // Chiết khấu ~26%
     description: 'Tối ưu cho doanh nghiệp, cá nhân cần trang Landing Page đơn phục vụ chạy quảng cáo, giới thiệu sản phẩm, dịch vụ.',
     icon: <RocketOutlined style={{ fontSize: '28px', color: '#06b6d4' }} />,
     color: '#06b6d4',
+    isPopular: true,
     slotsLeftText: 'Đã nhận 8/10 suất ưu đãi (Còn 2 slot)!',
     features: [
       'Thiết kế trực tiếp trên trang wordpress dùng theme LX Landing',
@@ -117,7 +118,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Clone & Vibe',
-    price: 1500000,
+    price: 1499000,
     originalPrice: 2000000, // Chiết khấu 25%
     description: 'Dành riêng cho đơn vị cần clone giao diện theo mẫu và ghép backend WordPress để khách tự nhập liệu dễ dàng.',
     icon: <CopyOutlined style={{ fontSize: '28px', color: '#8b5cf6' }} />,
@@ -132,7 +133,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Cơ Bản',
-    price: 2000000,
+    price: 1999000,
     originalPrice: 2700000, // Chiết khấu ~26%
     description: 'Phù hợp cho các dự án giới thiệu cá nhân, shop nhỏ hoặc landing page giới thiệu sản phẩm đơn giản.',
     icon: <ThunderboltOutlined style={{ fontSize: '28px', color: '#10b981' }} />,
@@ -147,13 +148,12 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
-    title: 'Gói Phổ Biến',
-    price: 3000000,
+    title: 'Gói Bán Hàng',
+    price: 2999000,
     originalPrice: 4000000, // Chiết khấu 25%
     description: 'Giải pháp tối ưu cho việc mở các shop, cửa hàng bán hàng chuyên nghiệp có tích hợp giỏ hàng và thanh toán trực tuyến.',
     icon: <FireOutlined style={{ fontSize: '28px', color: '#6366f1' }} />,
     color: '#6366f1',
-    isPopular: true,
     slotsLeftText: 'Đã nhận 17/20 suất ưu đãi (Còn 3 slot)!',
     features: [
       'Thiết kế trực tiếp trên trang wordpress dùng theme LX Landing',
@@ -165,7 +165,7 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Cao Cấp',
-    price: 6000000,
+    price: 5999000,
     originalPrice: 8000000, // Chiết khấu 25%
     description: 'Thiết kế độc quyền, lập trình trực tiếp từ bản vẽ thiết kế Figma (chuyển thiết kế Figma thành Html/css/js). Tốc độ cực hạn.',
     icon: <CrownOutlined style={{ fontSize: '28px', color: '#f59e0b' }} />,
@@ -194,7 +194,7 @@ const Services: React.FC = () => {
     'Gói Clone & Vibe': '.top',
     'Gói Landing Page': '.top',
     'Gói Cơ Bản': '.top',
-    'Gói Phổ Biến': '.top',
+    'Gói Bán Hàng': '.top',
     'Gói Cao Cấp': '.top',
   });
 
@@ -203,7 +203,7 @@ const Services: React.FC = () => {
     'Gói Clone & Vibe': 'basic01',
     'Gói Landing Page': 'basic01',
     'Gói Cơ Bản': 'basic01',
-    'Gói Phổ Biến': 'basic01',
+    'Gói Bán Hàng': 'basic01',
     'Gói Cao Cấp': 'basic01',
   });
 
@@ -212,7 +212,7 @@ const Services: React.FC = () => {
     'Gói Clone & Vibe': false,
     'Gói Landing Page': false,
     'Gói Cơ Bản': false,
-    'Gói Phổ Biến': false,
+    'Gói Bán Hàng': false,
     'Gói Cao Cấp': false,
   });
 
