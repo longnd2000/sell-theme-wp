@@ -68,15 +68,12 @@ const TemplatesPreview: React.FC = () => {
 
   return (
     <div style={{ paddingBottom: '60px' }}>
-      <div style={{ marginBottom: '24px', marginTop: '10px' }}>
         <Breadcrumb
           items={[
             { title: <a onClick={() => navigate('/')}>Trang chủ</a> },
-            { title: <a onClick={() => navigate('/services')}>Dịch vụ Website</a> },
             { title: 'Xem Mẫu Template Chuẩn SEO' },
           ]}
         />
-      </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
@@ -89,7 +86,7 @@ const TemplatesPreview: React.FC = () => {
         </div>
         <Button 
           icon={<LeftOutlined />} 
-          onClick={() => navigate('/services')}
+          onClick={() => navigate('/')}
           style={{ borderRadius: '8px' }}
         >
           Quay lại Bảng giá

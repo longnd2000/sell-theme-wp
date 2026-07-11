@@ -40,7 +40,7 @@ const ThemeDetail: React.FC = () => {
     return (
       <div style={{ textAlign: 'center', padding: '80px 0' }}>
         <Title level={4} danger>Không tìm thấy theme hoặc có lỗi kết nối.</Title>
-        <Button type="primary" onClick={() => navigate('/')} style={{ marginTop: '16px' }}>
+        <Button type="primary" onClick={() => navigate('/themes')} style={{ marginTop: '16px' }}>
           Quay lại Cửa Hàng
         </Button>
       </div>
@@ -53,14 +53,14 @@ const ThemeDetail: React.FC = () => {
       <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Breadcrumb
           items={[
-            { title: <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>Theme Market</span> },
+            { title: <span style={{ cursor: 'pointer' }} onClick={() => navigate('/themes')}>Theme Market</span> },
             { title: themeItem.name }
           ]}
         />
         <Button 
           type="text" 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/themes')}
           style={{ display: 'flex', alignItems: 'center' }}
         >
           Quay lại

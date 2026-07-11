@@ -63,7 +63,7 @@ const Checkout: React.FC = () => {
               <Button type="primary" size="large" onClick={() => navigate('/admin/licenses')} key="dashboard" icon={<SafetyCertificateOutlined />}>
                 Đến Quản Lý Bản Quyền
               </Button>,
-              <Button size="large" onClick={() => navigate('/')} key="market">
+              <Button size="large" onClick={() => navigate('/themes')} key="market">
                 Tiếp Tục Mua Sắm
               </Button>,
             ]}
@@ -129,7 +129,7 @@ const Checkout: React.FC = () => {
           status="warning"
           title="Không Có Sản Phẩm Trong Giỏ Hàng"
           extra={
-            <Button type="primary" onClick={() => navigate('/')}>
+            <Button type="primary" onClick={() => navigate('/themes')}>
               Quay Lại Cửa Hàng
             </Button>
           }

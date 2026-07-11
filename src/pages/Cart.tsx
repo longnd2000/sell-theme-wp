@@ -82,7 +82,7 @@ const Cart: React.FC = () => {
                 <Button
                   type="link"
                   icon={<ArrowLeftOutlined />}
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/themes')}
                   style={{ display: 'inline-flex', alignItems: 'center', paddingLeft: 0 }}
                 >
                   Tiếp tục mua sắm
@@ -154,7 +154,7 @@ const Cart: React.FC = () => {
             image={<ShoppingCartOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
             description="Giỏ hàng của bạn đang trống."
           >
-            <Button type="primary" onClick={() => navigate('/')} size="large" icon={<ArrowLeftOutlined />}>
+            <Button type="primary" onClick={() => navigate('/themes')} size="large" icon={<ArrowLeftOutlined />}>
               Quay lại cửa hàng
             </Button>
           </Empty>

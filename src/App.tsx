@@ -47,7 +47,8 @@ const App: React.FC = () => {
   const currentKey = 
     location.pathname === '/admin/licenses' ? 'licenses' : 
     location.pathname === '/admin/themes' ? 'admin-themes' : 
-    location.pathname === '/services' ? 'services' : 'market';
+    location.pathname === '/themes' || location.pathname.startsWith('/theme/') ? 'market' : 
+    location.pathname === '/' ? 'services' : 'services';
 
   return (
     // ConfigProvider của Ant Design dùng để thiết lập Design System chung cho toàn dự án
@@ -128,14 +129,14 @@ const App: React.FC = () => {
             }}
             items={[
               {
-                key: 'market',
-                icon: <ShopOutlined />,
-                label: <Link to="/">Theme Market</Link>,
-              },
-              {
                 key: 'services',
                 icon: <SettingOutlined />,
-                label: <Link to="/services">Dịch vụ Website</Link>,
+                label: <Link to="/">Dịch vụ Website</Link>,
+              },
+              {
+                key: 'market',
+                icon: <ShopOutlined />,
+                label: <Link to="/themes">Theme Market</Link>,
               },
               isAdmin && {
                 key: 'licenses',
@@ -171,9 +172,9 @@ const App: React.FC = () => {
         <Content style={{ padding: '24px', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
           <div className="animate-fade-in">
             <Routes>
-              <Route path="/" element={<Market />} />
+              <Route path="/" element={<Services />} />
+              <Route path="/themes" element={<Market />} />
               <Route path="/theme/:id" element={<ThemeDetail />} />
-              <Route path="/services" element={<Services />} />
               <Route path="/templates-preview" element={<TemplatesPreview />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
