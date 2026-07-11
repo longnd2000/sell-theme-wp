@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // Import các UI Components từ thư viện Ant Design
-import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal, Tag, Carousel } from 'antd';
+import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal, Tag, Carousel, Checkbox, Form, Input, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 // Import các Icons từ Ant Design để minh họa tính năng trực quan
 import {
@@ -72,9 +72,10 @@ const DOMAIN_OPTIONS: DomainOption[] = [
 
 // Danh sách các gói Hosting đi kèm từ nhà cung cấp
 const HOSTING_OPTIONS: HostingOption[] = [
-  { key: 'pro01', name: 'Host Pro 01', price12m: 900000, extraPrice: 0, specs: 'CPU 2 Core | RAM 2GB | SSD 5GB' },
-  { key: 'pro02', name: 'Host Pro 02', price12m: 1400000, extraPrice: 500000, specs: 'CPU 3 Core | RAM 3GB | SSD 10GB' },
-  { key: 'business01', name: 'Host Business 01', price12m: 2000000, extraPrice: 1100000, specs: 'CPU 4 Core | RAM 4GB | SSD 20GB' },
+  { key: 'basic01', name: 'Host Basic 01', price12m: 250000, extraPrice: 0, specs: 'CPU 2 Core | RAM 2GB | SSD 1GB' },
+  { key: 'basic02', name: 'Host Basic 02', price12m: 500000, extraPrice: 250000, specs: 'CPU 2 Core | RAM 3GB | SSD 3GB' },
+  { key: 'basic03', name: 'Host Basic 03', price12m: 1000000, extraPrice: 750000, specs: 'CPU 3 Core | RAM 3GB | SSD 6GB' },
+  { key: 'basic04', name: 'Host Basic 04', price12m: 1400000, extraPrice: 1150000, specs: 'CPU 4 Core | RAM 4GB | SSD 10GB' },
 ];
 
 /**
@@ -199,14 +200,31 @@ const Services: React.FC = () => {
 
   // State quản lý gói hosting được chọn cho từng gói
   const [selectedHostings, setSelectedHostings] = useState<Record<string, string>>({
-    'Gói Clone & Vibe': 'pro01',
-    'Gói Landing Page': 'pro01',
-    'Gói Cơ Bản': 'pro01',
-    'Gói Phổ Biến': 'pro01',
-    'Gói Cao Cấp': 'pro01',
+    'Gói Clone & Vibe': 'basic01',
+    'Gói Landing Page': 'basic01',
+    'Gói Cơ Bản': 'basic01',
+    'Gói Phổ Biến': 'basic01',
+    'Gói Cao Cấp': 'basic01',
+  });
+
+  // State quản lý xem gói dịch vụ đó khách hàng đã có tên miền & hosting hay chưa để trừ 300k
+  const [hasDomainHosting, setHasDomainHosting] = useState<Record<string, boolean>>({
+    'Gói Clone & Vibe': false,
+    'Gói Landing Page': false,
+    'Gói Cơ Bản': false,
+    'Gói Phổ Biến': false,
+    'Gói Cao Cấp': false,
   });
 
   const [openModalPlan, setOpenModalPlan] = useState<PricingPlan | null>(null);
+  // State quản lý gói đang được chọn để đăng ký nhanh qua Form
+  const [openRegisterPlan, setOpenRegisterPlan] = useState<PricingPlan | null>(null);
+  // State ẩn/hiện Modal báo cáo đăng ký thành công
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // State lưu trữ dữ liệu tóm tắt đăng ký để hiển thị lên popup thành công
+  const [registerSummary, setRegisterSummary] = useState<any>(null);
+  // State quản lý trạng thái đang gửi form để tránh click liên tục nhiều lần (double submit)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Hàm tính toán số giây còn lại từ thời điểm hiện tại đến cuối tháng hiện tại (23:59:59 của ngày cuối tháng)
   const getSecondsToEndOfMonth = () => {
@@ -214,6 +232,49 @@ const Services: React.FC = () => {
     // Tạo mốc thời gian cuối cùng của tháng hiện tại (ngày 0 của tháng tiếp theo = ngày cuối cùng tháng này)
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     return Math.max(0, Math.floor((endOfMonth.getTime() - now.getTime()) / 1000));
+  };
+
+  // Hàm gửi thông báo đăng ký qua Telegram Bot sử dụng Fetch API, trả về trạng thái gửi thành công
+  const sendTelegramNotification = (data: any): Promise<boolean> => {
+    const token = '8619393926:AAHdWD6I1foQ507QXud0r2rrpnlljWq6ANM';
+    const chatId = '-5578329672';
+    
+    const messageText = `<b>🔔 YÊU CẦU ĐĂNG KÝ WEBSITE MỚI</b>\n` +
+      `──────────────────\n` +
+      `<b>📦 Gói dịch vụ:</b> ${data.planTitle}\n` +
+      `<b>👤 Khách hàng:</b> ${data.fullName}\n` +
+      `<b>🌐 Tên miền đăng ký:</b> ${data.domain}\n` +
+      `<b>ℹ️ Chi tiết tên miền:</b> ${data.domainDetail}\n` +
+      `<b>🚀 Gói Hosting đi kèm:</b> ${data.hostingDetail}\n` +
+      `<b>📱 Số Zalo:</b> ${data.zaloPhone}\n` +
+      `<b>💼 Lĩnh vực:</b> ${data.websiteField}\n` +
+      `<b>💰 Tạm tính:</b> ${data.price.toLocaleString('vi-VN')} đ\n` +
+      `<b>📝 Ghi chú:</b> ${data.notes}\n` +
+      `──────────────────\n` +
+      `<i>Hệ thống WPHub Auto-Notification</i>`;
+
+    return fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageText,
+        parse_mode: 'HTML',
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        console.error('Lỗi gửi tin nhắn Telegram:', response.statusText);
+        return false;
+      }
+      return true;
+    })
+    .catch(error => {
+      console.error('Lỗi kết nối Telegram API:', error);
+      return false;
+    });
   };
 
   // State lưu trữ số giây còn lại đến cuối tháng
@@ -389,26 +450,32 @@ const Services: React.FC = () => {
           style={{ paddingBottom: '30px' }} // Khoảng trống cho các dấu chấm điều hướng dots bên dưới
         >
           {PLANS.map((plan) => {
+            const isOwned = hasDomainHosting[plan.title] || false;
             const selectedSuffix = selectedDomains[plan.title] || '.top';
             const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
-            const domainPrice = domainOpt ? domainOpt.price : 0;
+            const domainPrice = isOwned ? 0 : (domainOpt ? domainOpt.price : 0);
 
-            const selectedHostKey = selectedHostings[plan.title] || 'pro01';
+            const selectedHostKey = selectedHostings[plan.title] || 'basic01';
             const hostingOpt = HOSTING_OPTIONS.find(h => h.key === selectedHostKey);
-            const hostingExtraPrice = hostingOpt ? hostingOpt.extraPrice : 0;
+            const hostingExtraPrice = isOwned ? 0 : (hostingOpt ? hostingOpt.extraPrice : 0);
 
-            const totalPrice = plan.price + domainPrice + hostingExtraPrice;
-            const totalOriginalPrice = (plan.originalPrice || plan.price) + domainPrice + hostingExtraPrice;
+            const basePrice = isOwned ? (plan.price - 200000) : plan.price;
+            const baseOriginalPrice = isOwned ? ((plan.originalPrice || plan.price) - 200000) : (plan.originalPrice || plan.price);
+
+            const totalPrice = basePrice + domainPrice + hostingExtraPrice;
+            const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice;
             const discountPercent = plan.originalPrice 
               ? Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100) 
               : 0;
 
             // Tạo nội dung tin nhắn gửi Zalo soạn sẵn
-            const zaloMessage = `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
+            const zaloMessage = isOwned
+              ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
+              : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
             const zaloUrl = `https://zalo.me/0815483669?text=${encodeURIComponent(zaloMessage)}`;
 
             // Hợp nhất các cam kết và các thông số được chọn động
-            const displayFeatures = [
+            const displayFeatures = isOwned ? plan.features : [
               `Tặng kèm ${hostingOpt?.name} (${hostingOpt?.specs})`,
               `Hỗ trợ tên miền miễn phí đuôi ${selectedSuffix}`,
               ...plan.features
@@ -571,13 +638,44 @@ const Services: React.FC = () => {
                       );
                     })()}
 
+                    {/* Checkbox Đã có Tên miền & Hosting */}
+                    <div style={{ marginBottom: '12px' }}>
+                      <Checkbox
+                        checked={isOwned}
+                        onChange={(e) => setHasDomainHosting(prev => ({ ...prev, [plan.title]: e.target.checked }))}
+                        style={{ fontSize: '12.5px', fontWeight: 600, color: '#475569' }}
+                      >
+                        Tôi đã có Tên miền & Hosting riêng
+                      </Checkbox>
+                    </div>
+
+                    {isOwned && (
+                      <div style={{ marginBottom: '14px', padding: '8px 12px', background: '#ecfdf5', borderRadius: '8px', border: '1px dashed #10b981' }}>
+                        <Text style={{ fontSize: '11.5px', color: '#047857', fontWeight: 600, display: 'block' }}>
+                          ✓ Giảm trừ gói hạ tầng 200.000 đ
+                        </Text>
+                      </div>
+                    )}
+
                     {/* Dropdowns Cấu hình Tên miền & Hosting */}
-                    <div style={{ marginBottom: '16px', background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ 
+                      marginBottom: '16px', 
+                      background: '#f8fafc', 
+                      padding: '12px', 
+                      borderRadius: '12px', 
+                      border: '1px solid #f1f5f9', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: '12px',
+                      opacity: isOwned ? 0.5 : 1,
+                      pointerEvents: isOwned ? 'none' : 'auto'
+                    }}>
                       <div>
                         <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: '6px', color: '#475569' }}>
                           Đuôi tên miền đi kèm:
                         </Text>
                         <Select
+                          disabled={isOwned}
                           value={selectedSuffix}
                           onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
                           style={{ width: '100%' }}
@@ -593,7 +691,8 @@ const Services: React.FC = () => {
                           Gói Hosting đi kèm:
                         </Text>
                         <Select
-                          value={selectedHostings[plan.title] || 'pro01'}
+                          disabled={isOwned}
+                          value={selectedHostings[plan.title] || 'basic01'}
                           onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
                           style={{ width: '100%' }}
                           options={HOSTING_OPTIONS.map(h => ({
@@ -640,7 +739,7 @@ const Services: React.FC = () => {
                       Xem Chi Tiết
                     </Button>
                     <Button
-                      type={plan.isPopular ? 'primary' : 'default'}
+                      type="default"
                       size="middle"
                       block
                       href={zaloUrl}
@@ -649,11 +748,26 @@ const Services: React.FC = () => {
                         height: '38px',
                         borderRadius: '8px',
                         fontWeight: 600,
-                        borderColor: plan.isPopular ? undefined : plan.color,
-                        color: plan.isPopular ? undefined : plan.color,
+                        borderColor: plan.color,
+                        color: plan.color,
                       }}
                     >
-                      Đăng Ký Tư Vấn
+                      Tư Vấn Ngay
+                    </Button>
+                    <Button
+                      type="primary"
+                      size="middle"
+                      block
+                      onClick={() => setOpenRegisterPlan(plan)}
+                      style={{
+                        height: '38px',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        background: plan.color,
+                        borderColor: plan.color,
+                      }}
+                    >
+                      Đăng Ký Ngay
                     </Button>
                   </div>
                 </Card>
@@ -728,21 +842,30 @@ const Services: React.FC = () => {
       >
         {openModalPlan && (() => {
           const plan = openModalPlan;
+          const isOwned = hasDomainHosting[plan.title] || false;
           const selectedSuffix = selectedDomains[plan.title] || '.top';
           const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
-          const domainPrice = domainOpt ? domainOpt.price : 0;
+          const domainPrice = isOwned ? 0 : (domainOpt ? domainOpt.price : 0);
 
-          const selectedHostKey = selectedHostings[plan.title] || 'pro01';
+          const selectedHostKey = selectedHostings[plan.title] || 'basic01';
           const hostingOpt = HOSTING_OPTIONS.find(h => h.key === selectedHostKey);
-          const hostingExtraPrice = hostingOpt ? hostingOpt.extraPrice : 0;
+          const hostingExtraPrice = isOwned ? 0 : (hostingOpt ? hostingOpt.extraPrice : 0);
 
-          const totalPrice = plan.price + domainPrice + hostingExtraPrice;
-          const totalOriginalPrice = (plan.originalPrice || plan.price) + domainPrice + hostingExtraPrice;
+          const basePrice = isOwned ? (plan.price - 200000) : plan.price;
+          const baseOriginalPrice = isOwned ? ((plan.originalPrice || plan.price) - 200000) : (plan.originalPrice || plan.price);
+
+          const totalPrice = basePrice + domainPrice + hostingExtraPrice;
+          const totalOriginalPrice = baseOriginalPrice + domainPrice + hostingExtraPrice;
           const discountPercent = plan.originalPrice 
             ? Math.round(((plan.originalPrice - plan.price) / plan.originalPrice) * 100) 
             : 0;
 
-          const displayFeatures = [
+          const zaloMessage = isOwned 
+            ? `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title}. Mình đã tự chuẩn bị tên miền & hosting (Giảm trừ gói hạ tầng 200k). Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`
+            : `Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`;
+          const zaloUrl = `https://zalo.me/0815483669?text=${encodeURIComponent(zaloMessage)}`;
+
+          const displayFeatures = isOwned ? plan.features : [
             `Tặng kèm ${hostingOpt?.name} (${hostingOpt?.specs})`,
             `Hỗ trợ tên miền miễn phí đuôi ${selectedSuffix}`,
             ...plan.features
@@ -847,32 +970,71 @@ const Services: React.FC = () => {
                     )}
                   </div>
                   <Text type="secondary" style={{ fontSize: '11px', color: '#64748b' }}>
-                    Bao gồm: {hostingOpt?.name} & Tên miền {selectedSuffix}
+                    {isOwned ? 'Tự chuẩn bị Tên miền & Hosting (Giảm trừ gói hạ tầng 200k)' : `Bao gồm: ${hostingOpt?.name} & Tên miền ${selectedSuffix}`}
                   </Text>
                 </div>
-                <Button
-                  type="primary"
-                  size="middle"
-                  href={`https://zalo.me/0815483669?text=${encodeURIComponent(`Chào WPHub, mình muốn đăng ký tư vấn ${plan.title} sử dụng tên miền đuôi ${selectedSuffix} và gói ${hostingOpt?.name}. Tổng chi phí dự tính là ${totalPrice.toLocaleString('vi-VN')} đ.`)}`}
-                  target="_blank"
-                  style={{
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    height: '38px',
-                    background: plan.color,
-                    borderColor: plan.color,
-                  }}
-                >
-                  Đăng Ký Tư Vấn Ngay
-                </Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    type="default"
+                    size="middle"
+                    href={zaloUrl}
+                    target="_blank"
+                    style={{
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      height: '38px',
+                      borderColor: plan.color,
+                      color: plan.color,
+                    }}
+                  >
+                    Tư Vấn Ngay
+                  </Button>
+                  <Button
+                    type="primary"
+                    size="middle"
+                    onClick={() => {
+                      setOpenModalPlan(null);
+                      setOpenRegisterPlan(plan);
+                    }}
+                    style={{
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      height: '38px',
+                      background: plan.color,
+                      borderColor: plan.color,
+                    }}
+                  >
+                    Đăng Ký Ngay
+                  </Button>
+                </div>
               </div>
 
+              {/* Checkbox Đã có Tên miền & Hosting riêng */}
+              <div style={{ marginBottom: '12px' }}>
+                <Checkbox
+                  checked={isOwned}
+                  onChange={(e) => setHasDomainHosting(prev => ({ ...prev, [plan.title]: e.target.checked }))}
+                  style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}
+                >
+                  Tôi đã có Tên miền & Hosting riêng
+                </Checkbox>
+              </div>
+
+              {isOwned && (
+                <div style={{ marginBottom: '14px', padding: '8px 12px', background: '#ecfdf5', borderRadius: '8px', border: '1px dashed #10b981' }}>
+                  <Text style={{ fontSize: '12px', color: '#047857', fontWeight: 600, display: 'block' }}>
+                    ✓ Giảm trừ gói hạ tầng 200.000 đ vào tổng chi phí tạm tính
+                  </Text>
+                </div>
+              )}
+
               {/* Dropdowns Cấu hình Tên miền & Hosting */}
-              <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+              <Row gutter={[16, 16]} style={{ marginBottom: '16px', opacity: isOwned ? 0.5 : 1, pointerEvents: isOwned ? 'none' : 'auto' }}>
                 <Col xs={24} sm={12}>
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9', height: '100%' }}>
                     <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>Tên miền:</Text>
                     <Select
+                      disabled={isOwned}
                       value={selectedSuffix}
                       onChange={(val) => setSelectedDomains(prev => ({ ...prev, [plan.title]: val }))}
                       style={{ width: '100%' }}
@@ -887,7 +1049,8 @@ const Services: React.FC = () => {
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #f1f5f9', height: '100%' }}>
                     <Text strong style={{ fontSize: '11.5px', display: 'block', marginBottom: '4px', color: '#475569' }}>SSD Hosting (12 tháng):</Text>
                     <Select
-                      value={selectedHostings[plan.title] || 'pro01'}
+                      disabled={isOwned}
+                      value={selectedHostings[plan.title] || 'basic01'}
                       onChange={(val) => setSelectedHostings(prev => ({ ...prev, [plan.title]: val }))}
                       style={{ width: '100%' }}
                       options={HOSTING_OPTIONS.map(h => ({
@@ -910,6 +1073,261 @@ const Services: React.FC = () => {
             </div>
           );
         })()}
+      </Modal>
+
+      {/* Modal đăng ký gói dịch vụ (Form nhập thông tin chi tiết) */}
+      <Modal
+        title={
+          openRegisterPlan ? (
+            <Space align="center" style={{ paddingBottom: '4px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: `${openRegisterPlan.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <RocketOutlined style={{ color: openRegisterPlan.color, fontSize: '16px' }} />
+              </div>
+              <Text strong style={{ fontSize: '16px', display: 'block', color: '#1e293b' }}>
+                Đăng Ký Dịch Vụ - {openRegisterPlan.title}
+              </Text>
+            </Space>
+          ) : null
+        }
+        open={!!openRegisterPlan}
+        onCancel={() => setOpenRegisterPlan(null)}
+        footer={null}
+        destroyOnClose
+        centered
+        width={520}
+      >
+        {openRegisterPlan && (() => {
+          const plan = openRegisterPlan;
+          const isOwned = hasDomainHosting[plan.title] || false;
+          const selectedSuffix = selectedDomains[plan.title] || '.top';
+
+          const onFinish = (values: any) => {
+            // Hạn chế người dùng spam form: Kiểm tra Cooldown 60 giây lưu ở LocalStorage
+            const lastSubmit = localStorage.getItem('wphub_last_submit');
+            const now = Date.now();
+            if (lastSubmit && now - parseInt(lastSubmit) < 60000) {
+              const secondsLeft = Math.ceil((60000 - (now - parseInt(lastSubmit))) / 1000);
+              message.warning(`Bạn đang thao tác quá nhanh. Vui lòng đợi ${secondsLeft} giây trước khi gửi lại yêu cầu.`);
+              return;
+            }
+
+            setIsSubmitting(true);
+            
+            // Tính toán chi phí tạm tính để truyền sang popup kết quả
+            const domainPrice = isOwned ? 0 : (DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix)?.price || 0);
+            const hostingExtraPrice = isOwned ? 0 : (HOSTING_OPTIONS.find(h => h.key === (selectedHostings[plan.title] || 'basic01'))?.extraPrice || 0);
+            const basePrice = isOwned ? (plan.price - 200000) : plan.price;
+            const finalPrice = basePrice + domainPrice + hostingExtraPrice;
+
+            // Tính toán chi tiết đuôi tên miền & hosting
+            let domainDetail = '';
+            if (isOwned) {
+              domainDetail = 'Khách tự chuẩn bị (Không đăng ký)';
+            } else {
+              const domOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);
+              if (domOpt) {
+                domainDetail = `${domOpt.suffix} ${domOpt.isFree ? '(Miễn phí đi kèm)' : `(+${domOpt.price.toLocaleString('vi-VN')} đ)`}`;
+              } else {
+                domainDetail = selectedSuffix;
+              }
+            }
+
+            let hostingDetail = '';
+            if (isOwned) {
+              hostingDetail = 'Khách tự chuẩn bị (Không đăng ký)';
+            } else {
+              const hostOpt = HOSTING_OPTIONS.find(h => h.key === (selectedHostings[plan.title] || 'basic01'));
+              if (hostOpt) {
+                hostingDetail = `${hostOpt.name} ${hostOpt.extraPrice === 0 ? '(Miễn phí đi kèm)' : `(+${hostOpt.extraPrice.toLocaleString('vi-VN')} đ)`} [${hostOpt.specs}]`;
+              }
+            }
+
+            const summary = {
+              planTitle: plan.title,
+              fullName: values.fullName,
+              domain: isOwned ? 'Đã có sẵn (Tự chuẩn bị)' : `${values.domainPrefix}${selectedSuffix}`,
+              domainDetail,
+              hostingDetail,
+              zaloPhone: values.zaloPhone,
+              websiteField: values.websiteField,
+              notes: values.notes || 'Không có',
+              price: finalPrice
+            };
+
+            // Thực hiện gửi thông tin đăng ký về Telegram Bot
+            sendTelegramNotification(summary).then((success) => {
+              setIsSubmitting(false);
+              if (success) {
+                // Chỉ thiết lập thời gian gửi để hạn chế spam khi gửi Telegram thành công
+                localStorage.setItem('wphub_last_submit', Date.now().toString());
+                setRegisterSummary(summary);
+                setOpenRegisterPlan(null);
+                setShowSuccessModal(true);
+              } else {
+                message.error('Gửi yêu cầu đăng ký website thất bại do sự cố mạng. Bạn vui lòng chụp màn hình hoặc gửi tin nhắn trực tiếp qua Zalo/Hotline.');
+              }
+            });
+          };
+
+          // Tính toán chi phí tạm tính để hiển thị trên Form
+          const domainPrice = isOwned ? 0 : (DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix)?.price || 0);
+          const hostingExtraPrice = isOwned ? 0 : (HOSTING_OPTIONS.find(h => h.key === (selectedHostings[plan.title] || 'basic01'))?.extraPrice || 0);
+          const basePrice = isOwned ? (plan.price - 200000) : plan.price;
+          const finalPrice = basePrice + domainPrice + hostingExtraPrice;
+
+          return (
+            <div style={{ marginTop: '16px' }}>
+              {/* Thẻ hiển thị giá tạm tính trực quan */}
+              <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #f1f5f9', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <Text type="secondary" style={{ fontSize: '10px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chi Phí Tạm Tính</Text>
+                  <Title level={4} style={{ margin: 0, color: '#ef4444', fontWeight: 800, fontSize: '18px' }}>
+                    {finalPrice.toLocaleString('vi-VN')} đ
+                  </Title>
+                </div>
+                <Tag color={plan.isPopular ? 'indigo' : 'default'} style={{ margin: 0, borderRadius: '4px', fontWeight: 600 }}>
+                  {plan.title}
+                </Tag>
+              </div>
+
+              <Form
+                layout="vertical"
+                onFinish={onFinish}
+              >
+                <Form.Item
+                  label={<Text strong style={{ fontSize: '13px' }}>Họ và tên</Text>}
+                  name="fullName"
+                  rules={[{ required: true, message: 'Vui lòng nhập họ và tên của bạn' }]}
+                >
+                  <Input placeholder="Ví dụ: Nguyễn Văn A" size="large" style={{ borderRadius: '8px' }} />
+                </Form.Item>
+
+                {!isOwned && (
+                  <Form.Item
+                    label={<Text strong style={{ fontSize: '13px' }}>Tên miền đăng ký</Text>}
+                    name="domainPrefix"
+                    rules={[
+                      { required: true, message: 'Vui lòng nhập tên miền mong muốn' },
+                      { pattern: /^[a-zA-Z0-9-.]+$/, message: 'Tên miền chỉ được chứa chữ, số, dấu gạch ngang' }
+                    ]}
+                  >
+                    <Input 
+                      placeholder="Ví dụ: webcuatoi" 
+                      addonAfter={selectedSuffix} 
+                      size="large"
+                      style={{ borderRadius: '8px' }}
+                    />
+                  </Form.Item>
+                )}
+
+                <Form.Item
+                  label={<Text strong style={{ fontSize: '13px' }}>Số Zalo liên hệ</Text>}
+                  name="zaloPhone"
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập số điện thoại Zalo' },
+                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại phải gồm 10 - 11 chữ số' }
+                  ]}
+                >
+                  <Input placeholder="Ví dụ: 0815483669" size="large" style={{ borderRadius: '8px' }} />
+                </Form.Item>
+
+                <Form.Item
+                  label={<Text strong style={{ fontSize: '13px' }}>Lĩnh vực làm website</Text>}
+                  name="websiteField"
+                  rules={[{ required: true, message: 'Vui lòng nhập chủ đề / ngành nghề của website' }]}
+                >
+                  <Input placeholder="Ví dụ: Shop quần áo, Khách sạn, Bất động sản..." size="large" style={{ borderRadius: '8px' }} />
+                </Form.Item>
+
+                <Form.Item
+                  label={<Text strong style={{ fontSize: '13px' }}>Ghi chú / Yêu cầu thêm (Không bắt buộc)</Text>}
+                  name="notes"
+                >
+                  <Input.TextArea placeholder="Mô tả thêm các mong muốn hoặc tính năng bạn cần..." rows={3} style={{ borderRadius: '8px' }} />
+                </Form.Item>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                  <Button size="large" onClick={() => setOpenRegisterPlan(null)} style={{ borderRadius: '8px' }} disabled={isSubmitting}>
+                    Hủy bỏ
+                  </Button>
+                  <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    size="large" 
+                    loading={isSubmitting} 
+                    style={{ background: plan.color, borderColor: plan.color, borderRadius: '8px', fontWeight: 600 }}
+                  >
+                    Xác nhận Đăng ký
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* Modal thông báo kết quả Đăng ký thành công */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981' }}>
+            <CheckOutlined style={{ fontSize: '18px', background: '#ecfdf5', padding: '6px', borderRadius: '50%' }} />
+            <span style={{ fontWeight: 800 }}>GỬI YÊU CẦU THÀNH CÔNG!</span>
+          </div>
+        }
+        open={showSuccessModal}
+        onCancel={() => setShowSuccessModal(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setShowSuccessModal(false)} style={{ background: '#10b981', borderColor: '#10b981', borderRadius: '8px', fontWeight: 600 }}>
+            Đóng cửa sổ
+          </Button>
+        ]}
+        centered
+        width={480}
+      >
+        {registerSummary && (
+          <div style={{ marginTop: '16px' }}>
+            <Paragraph style={{ fontSize: '14px', color: '#475569' }}>
+              Chúc mừng <strong>{registerSummary.fullName}</strong>! WPHub đã tiếp nhận đầy đủ thông tin đăng ký dịch vụ của bạn.
+            </Paragraph>
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>GÓI DỊCH VỤ</Text>
+                <Text strong style={{ fontSize: '14px', color: '#1e293b' }}>{registerSummary.planTitle}</Text>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>TÊN MIỀN MONG MUỐN</Text>
+                <Text strong style={{ fontSize: '14px', color: '#6366f1' }}>{registerSummary.domain}</Text>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>SỐ ĐIỆN THOẠI ZALO</Text>
+                <Text strong style={{ fontSize: '14px', color: '#1e293b' }}>{registerSummary.zaloPhone}</Text>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>CHỦ ĐỀ WEBSITE</Text>
+                <Text strong style={{ fontSize: '14px', color: '#1e293b' }}>{registerSummary.websiteField}</Text>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>TỔNG CHI PHÍ TẠM TÍNH</Text>
+                <Text strong style={{ fontSize: '15px', color: '#ef4444' }}>{registerSummary.price.toLocaleString('vi-VN')} đ</Text>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '11px', display: 'block', color: '#64748b' }}>GHI CHÚ KÈM THEO</Text>
+                <Text style={{ fontSize: '13px', fontStyle: 'italic', color: '#475569' }}>{registerSummary.notes}</Text>
+              </div>
+            </div>
+            <Paragraph style={{ fontSize: '12.5px', color: '#64748b', fontStyle: 'italic', margin: 0 }}>
+              * Chuyên viên hỗ trợ của WPHub sẽ liên hệ trực tiếp qua số Zalo <strong>{registerSummary.zaloPhone}</strong> của bạn trong vòng 15 phút để hoàn tất thủ tục bàn giao website.
+            </Paragraph>
+          </div>
+        )}
       </Modal>
     </div>
   );
