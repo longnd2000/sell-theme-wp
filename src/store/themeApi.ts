@@ -11,16 +11,20 @@ import { supabase } from '../lib/supabaseClient';
  */
 export interface ThemeItem {
   id: string;          // ID duy nhất của theme
-  name: string;        // Tên theme
-  version: string;     // Phiên bản theme hiện tại (ví dụ: v1.0.0)
-  description: string; // Mô tả tính năng theme
-  price: number;       // Giá bán theme
-  image: string;       // Link ảnh preview giao diện
-  demoUrl: string;     // Đường dẫn xem thử demo trực tiếp
-  features: string[];  // Danh sách các tính năng nổi bật
-  tags: string[];      // Nhãn phân loại theme (ví dụ: Blog, Shop, Landing...)
-  rating: number;      // Điểm đánh giá trung bình từ khách hàng
-  downloads: number;   // Số lượt tải xuống/mua theme
+  name: string;        // Tên theme (Lấy từ title của WP)
+  version: string;     // Phiên bản theme hiện tại (Không còn dùng, trả về rỗng)
+  description: string; // Mô tả tính năng theme (Lấy từ content của WP)
+  price: number;       // Giá sale theme (Lấy từ price của WP)
+  originalPrice?: number; // Giá gốc theme (Lấy từ original_price của WP)
+  image: string;       // Link ảnh đại diện (Lấy từ featured_image của WP)
+  previewImage?: string; // Link ảnh xem trước trang chủ (Lấy từ preview_image của WP)
+  demoUrl: string;     // Đường dẫn xem thử demo trực tiếp (Không còn dùng, trả về rỗng)
+  features: string[];  // Danh sách các tính năng nổi bật (Không còn dùng, trả về rỗng)
+  tags: string[];      // Nhãn phân loại theme (Lấy từ fields/taxonomy của WP)
+  activeProjects?: string; // Các dự án thực tế đang dùng theme này (Lấy từ active_projects của WP)
+  servicePackage?: string; // Gói dịch vụ thiết kế website liên kết (Lấy từ service_package của WP)
+  rating: number;      // Điểm đánh giá trung bình từ khách hàng (Mặc định 5)
+  downloads: number;   // Số lượt tải xuống/mua theme (Mặc định 0)
 }
 
 /**
@@ -64,47 +68,51 @@ export const themeApi = createApi({
     getThemes: builder.query<ThemeItem[], void>({
       async queryFn() {
         try {
-          // Gọi Supabase truy vấn bảng 'themes', sắp xếp theo tên tăng dần
-          const { data, error } = await supabase
-            .from('themes')
-            .select('*')
-            .order('name', { ascending: true });
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          if (error) throw error;
-          
-          if (data && data.length > 0) {
-            console.log("RAW COLUMNS IN SUPABASE THEMES TABLE:", Object.keys(data[0]));
-            console.log("FIRST ROW DATA:", data[0]);
+          const response = await fetch(wpApiUrl, {
+            headers: {
+              'X-LX-API-Token': apiToken
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
           }
-          
-          // Khớp nối dữ liệu thô (raw data) từ Supabase sang chuẩn cấu trúc ThemeItem của Frontend
-          const mappedData: ThemeItem[] = (data || []).map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            version: item.version,
-            description: item.description,
-            price: item.price,
-            image: item.image_url || item.image || '',
-            demoUrl: item.demo_url || item.demoUrl || '',
-            features: item.features || [],
-            tags: item.tags || [],
-            rating: Number(item.rating || 5),
-            downloads: Number(item.downloads || 0),
+
+          const rawData = await response.json();
+
+          // Map dữ liệu từ WordPress REST API trả về sang chuẩn ThemeItem của React JS
+          const mappedData: ThemeItem[] = (rawData || []).map((item: any) => ({
+            id: item.id.toString(),
+            name: item.title || '',
+            version: '',
+            description: item.excerpt || item.content || '',
+            price: Number(item.price || 0),
+            originalPrice: Number(item.original_price || 0),
+            image: item.featured_image || '',
+            previewImage: item.preview_image || '',
+            demoUrl: '',
+            features: [],
+            tags: item.fields || [],
+            activeProjects: item.active_projects || '',
+            servicePackage: item.service_package || 'landing',
+            rating: 5,
+            downloads: 0,
           }));
 
-          // Trả về dữ liệu bọc trong trường { data } theo đúng chuẩn của RTK Query
           return { data: mappedData };
         } catch (err: any) {
-          // Trả về lỗi bọc trong trường { error }
           return { 
             error: { 
               status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi khi tải danh sách theme từ Supabase.' 
+              error: err.message || 'Lỗi khi tải danh sách theme từ WordPress REST API.' 
             } 
           };
         }
       },
-      // Gắn tag 'Themes' cho cache này để có thể invalidate (làm mới) khi cần thiết
       providesTags: ['Themes'],
     }),
 
@@ -116,27 +124,38 @@ export const themeApi = createApi({
     getThemeDetails: builder.query<ThemeItem, string>({
       async queryFn(id) {
         try {
-          // Truy vấn Supabase lọc theo ID, lấy duy nhất 1 bản ghi (.single())
-          const { data, error } = await supabase
-            .from('themes')
-            .select('*')
-            .eq('id', id)
-            .single();
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes/${id}`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          if (error) throw error;
+          const response = await fetch(wpApiUrl, {
+            headers: {
+              'X-LX-API-Token': apiToken
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
+          }
+
+          const rawData = await response.json();
 
           const mappedData: ThemeItem = {
-            id: data.id,
-            name: data.name,
-            version: data.version,
-            description: data.description,
-            price: data.price,
-            image: data.image_url || data.image || '',
-            demoUrl: data.demo_url || data.demoUrl || '',
-            features: data.features || [],
-            tags: data.tags || [],
-            rating: Number(data.rating || 5),
-            downloads: Number(data.downloads || 0),
+            id: rawData.id.toString(),
+            name: rawData.title || '',
+            version: '',
+            description: rawData.content || '',
+            price: Number(rawData.price || 0),
+            originalPrice: Number(rawData.original_price || 0),
+            image: rawData.featured_image || '',
+            previewImage: rawData.preview_image || '',
+            demoUrl: '',
+            features: [],
+            tags: rawData.fields || [],
+            activeProjects: rawData.active_projects || '',
+            servicePackage: rawData.service_package || 'landing',
+            rating: 5,
+            downloads: 0,
           };
 
           return { data: mappedData };
@@ -144,126 +163,125 @@ export const themeApi = createApi({
           return {
             error: {
               status: 'CUSTOM_ERROR',
-              error: err.message || 'Lỗi khi tải chi tiết theme từ Supabase.'
+              error: err.message || 'Lỗi khi tải chi tiết theme từ WordPress REST API.'
             }
           };
         }
       },
+      providesTags: (result, error, id) => [{ type: 'Themes', id }],
     }),
 
     /**
-     * ENDPOINT 3: Lấy danh sách các key bản quyền (Licenses) liên kết với Themes
+     * ENDPOINT 3: Lấy danh sách các key bản quyền (Licenses) liên kết với Themes từ WordPress
      * Trả về: Mảng các UserLicense[]
      * hook tương ứng: useGetLicensesQuery()
      */
     getLicenses: builder.query<UserLicense[], void>({
       async queryFn() {
         try {
-          // Gọi Supabase truy vấn bảng 'licenses' và JOIN thông tin bảng 'themes' để lấy tên theme
-          const { data, error } = await supabase
-            .from('licenses')
-            .select(`
-              *,
-              themes (
-                name
-              )
-            `);
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          if (error) throw error;
+          const response = await fetch(wpApiUrl, {
+            headers: {
+              'X-LX-API-Token': apiToken
+            }
+          });
 
-          const mappedData: UserLicense[] = (data || []).map((item: any) => ({
-            id: item.id,
-            themeId: item.theme_id,
-            // Sử dụng cú pháp an toàn để lấy tên theme sau khi JOIN
-            themeName: item.themes?.name || 'Theme Không Xác Định',
-            licenseKey: item.license_key,
-            status: item.status,
-            domain: item.domain || 'N/A',
-            // Rút gọn định dạng ngày tháng sang YYYY-MM-DD
-            activatedAt: item.activated_at ? item.activated_at.split('T')[0] : '',
-            expiresAt: item.expires_at ? item.expires_at.split('T')[0] : '',
-          }));
+          if (!response.ok) {
+            throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
+          }
 
-          return { data: mappedData };
+          const rawData = await response.json();
+          return { data: rawData as UserLicense[] };
         } catch (err: any) {
           return { 
             error: { 
               status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi khi tải thông tin bản quyền từ Supabase.' 
+              error: err.message || 'Lỗi khi tải thông tin bản quyền từ WordPress.' 
             } 
           };
         }
       },
-      // Cung cấp tag 'Licenses' cho cache để tự động làm mới khi admin kích hoạt/hủy domain
       providesTags: ['Licenses'],
     }),
 
     /**
      * ENDPOINT 4: Đăng ký kích hoạt license trên tên miền (domain) cụ thể
-     * Thay đổi dữ liệu -> builder.mutation
      * hook tương ứng: useActivateLicenseMutation()
      */
     activateLicense: builder.mutation<UserLicense, { licenseKey: string; domain: string }>({
       async queryFn({ licenseKey, domain }) {
         try {
-          // Cập nhật thông tin domain và chuyển trạng thái key sang 'active'
-          const { data, error } = await supabase
-            .from('licenses')
-            .update({
-              domain,
-              status: 'active',
-              activated_at: new Date().toISOString(),
-            })
-            .eq('license_key', licenseKey)
-            .select()
-            .single();
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/activate`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          if (error) throw error;
-          
+          const response = await fetch(wpApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-LX-API-Token': apiToken
+            },
+            body: JSON.stringify({ licenseKey, domain })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || `Lỗi kích hoạt: ${response.status}`);
+          }
+
+          const data = await response.json();
           return { data: data as UserLicense };
         } catch (err: any) {
           return { 
             error: { 
               status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi kích hoạt bản quyền trên Supabase.' 
+              error: err.message || 'Lỗi kích hoạt bản quyền từ WordPress REST API.' 
             } 
           };
         }
       },
-      // Invalidate tag 'Licenses' -> Ép buộc query getLicenses tải lại dữ liệu mới tức thì!
       invalidatesTags: ['Licenses'],
     }),
 
     /**
-     * ENDPOINT 5: Ngắt kết nối domain khỏi key bản quyền (Deactivate/Suspended)
+     * ENDPOINT 5: Ngắt kết nối domain khỏi key bản quyền
      * hook tương ứng: useDeactivateLicenseMutation()
      */
     deactivateLicense: builder.mutation<{ success: boolean }, { licenseKey: string }>({
       async queryFn({ licenseKey }) {
         try {
-          // Cập nhật xóa domain kết nối và đổi trạng thái sang tạm ngưng 'suspended'
-          const { error } = await supabase
-            .from('licenses')
-            .update({
-              domain: 'N/A',
-              status: 'suspended',
-              activated_at: null,
-            })
-            .eq('license_key', licenseKey);
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/deactivate`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          if (error) throw error;
-          
-          return { data: { success: true } };
+          const response = await fetch(wpApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-LX-API-Token': apiToken
+            },
+            body: JSON.stringify({ licenseKey })
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || `Lỗi hủy kích hoạt: ${response.status}`);
+          }
+
+          const data = await response.json();
+          return { data: data as { success: boolean } };
         } catch (err: any) {
           return { 
             error: { 
               status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi ngắt kích hoạt bản quyền trên Supabase.' 
+              error: err.message || 'Lỗi ngắt kích hoạt bản quyền từ WordPress REST API.' 
             } 
           };
         }
       },
-      // Làm mới danh sách Licenses khi ngắt kết nối
       invalidatesTags: ['Licenses'],
     }),
 
@@ -273,194 +291,43 @@ export const themeApi = createApi({
      */
     purchaseThemes: builder.mutation<{ success: boolean; licenses: UserLicense[] }, { themes: { id: string; name: string }[] }>({
       async queryFn({ themes }) {
-        // Hàm sinh mã key ngẫu nhiên dạng: WPHUB-XX-XXXX-XXXX-XXXX
-        const generateKey = (prefix: string) => {
-          const rand = () => Math.random().toString(36).substring(2, 6).toUpperCase();
-          return `WPHUB-${prefix}-${rand()}-${rand()}-${rand()}`;
-        };
-
         try {
-          const rows = themes.map(t => {
-            const key = generateKey(t.id.substring(0, 2).toUpperCase());
-            return {
-              theme_id: t.id,
-              license_key: key,
-              status: 'inactive', // Ban đầu ở trạng thái chưa dùng
-              domain: 'N/A',
-              expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Hạn mặc định 1 năm
-            };
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/purchase`;
+          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
+
+          const response = await fetch(wpApiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-LX-API-Token': apiToken
+            },
+            body: JSON.stringify({ themes })
           });
 
-          // Insert dòng mới vào bảng 'licenses' trên Supabase
-          const { data, error } = await supabase
-            .from('licenses')
-            .insert(rows)
-            .select(`
-              *,
-              themes (
-                name
-              )
-            `);
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.message || `Lỗi đặt mua: ${response.status}`);
+          }
 
-          if (error) throw error;
-
-          const mapped: UserLicense[] = (data || []).map((item: any) => ({
-            id: item.id,
-            themeId: item.theme_id,
-            themeName: item.themes?.name || 'Theme Không Xác Định',
-            licenseKey: item.license_key,
-            status: item.status,
-            domain: item.domain || 'N/A',
-            activatedAt: '',
-            expiresAt: item.expires_at ? item.expires_at.split('T')[0] : '',
-          }));
-
-          return { data: { success: true, licenses: mapped } };
+          const data = await response.json();
+          return { data: data as { success: boolean; licenses: UserLicense[] } };
         } catch (err: any) {
           return {
             error: {
               status: 'CUSTOM_ERROR',
-              error: err.message || 'Gặp lỗi trong quá trình xử lý lưu bản quyền lên Supabase.'
+              error: err.message || 'Lỗi tạo bản quyền trên WordPress REST API.'
             }
           };
         }
       },
-      // Invalidate licenses list cache
       invalidatesTags: ['Licenses'],
-    }),
-
-    /**
-     * ENDPOINT 7: Thêm một theme mới vào cơ sở dữ liệu (Admin quản lý)
-     * hook tương ứng: useCreateThemeMutation()
-     */
-    createTheme: builder.mutation<ThemeItem, Omit<ThemeItem, 'id' | 'rating' | 'downloads'>>({
-      async queryFn(newTheme) {
-        try {
-          const { data, error } = await supabase
-            .from('themes')
-            .insert({
-              name: newTheme.name,
-              version: newTheme.version,
-              description: newTheme.description,
-              price: newTheme.price,
-              image_url: newTheme.image,
-              features: newTheme.features,
-              tags: newTheme.tags,
-              rating: 5,
-              downloads: 0
-            })
-            .select();
-
-          if (error) throw error;
-          
-          if (!data || data.length === 0) {
-            throw new Error('Không thể thêm theme. Vui lòng kiểm tra RLS Policy (quyền INSERT) trên bảng themes ở Supabase Dashboard.');
-          }
-          
-          const inserted = data[0];
-          const mapped: ThemeItem = {
-            id: inserted.id,
-            name: inserted.name,
-            version: inserted.version,
-            description: inserted.description,
-            price: inserted.price,
-            image: inserted.image_url || inserted.image || '',
-            demoUrl: inserted.demo_url || inserted.demoUrl || '',
-            features: inserted.features || [],
-            tags: inserted.tags || [],
-            rating: Number(inserted.rating || 5),
-            downloads: Number(inserted.downloads || 0),
-          };
-
-          return { data: mapped };
-        } catch (err: any) {
-          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi thêm theme.' } };
-        }
-      },
-      // Invalidate tags 'Themes' để danh sách theme hiển thị cập nhật ngay lập tức ở giao diện chính
-      invalidatesTags: ['Themes'],
-    }),
-
-    /**
-     * ENDPOINT 8: Cập nhật thông tin theme đang có sẵn (Admin quản lý)
-     * hook tương ứng: useUpdateThemeMutation()
-     */
-    updateTheme: builder.mutation<ThemeItem, Partial<ThemeItem> & { id: string }>({
-      async queryFn({ id, ...updates }) {
-        try {
-          const dbUpdates: any = {};
-          if (updates.name !== undefined) dbUpdates.name = updates.name;
-          if (updates.version !== undefined) dbUpdates.version = updates.version;
-          if (updates.description !== undefined) dbUpdates.description = updates.description;
-          if (updates.price !== undefined) dbUpdates.price = updates.price;
-          if (updates.image !== undefined) dbUpdates.image_url = updates.image;
-          if (updates.features !== undefined) dbUpdates.features = updates.features;
-          if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
-
-          const { data, error } = await supabase
-            .from('themes')
-            .update(dbUpdates)
-            .eq('id', id)
-            .select();
-
-          if (error) throw error;
-
-          if (!data || data.length === 0) {
-            throw new Error('Không thể cập nhật theme. Vui lòng kiểm tra RLS Policy (quyền UPDATE) trên bảng themes ở Supabase Dashboard.');
-          }
-
-          const updated = data[0];
-          const mapped: ThemeItem = {
-            id: updated.id,
-            name: updated.name,
-            version: updated.version,
-            description: updated.description,
-            price: updated.price,
-            image: updated.image_url || updated.image || '',
-            demoUrl: updated.demo_url || updated.demoUrl || '',
-            features: updated.features || [],
-            tags: updated.tags || [],
-            rating: Number(updated.rating || 5),
-            downloads: Number(updated.downloads || 0),
-          };
-
-          return { data: mapped };
-        } catch (err: any) {
-          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi cập nhật theme.' } };
-        }
-      },
-      invalidatesTags: ['Themes'],
-    }),
-
-    /**
-     * ENDPOINT 9: Xóa theme khỏi danh mục đang bán (Admin quản lý)
-     * hook tương ứng: useDeleteThemeMutation()
-     */
-    deleteTheme: builder.mutation<{ success: boolean; id: string }, string>({
-      async queryFn(id) {
-        try {
-          const { error } = await supabase
-            .from('themes')
-            .delete()
-            .eq('id', id);
-
-          if (error) throw error;
-
-          return { data: { success: true, id } };
-        } catch (err: any) {
-          return { error: { status: 'CUSTOM_ERROR', error: err.message || 'Lỗi khi xóa theme.' } };
-        }
-      },
-      invalidatesTags: ['Themes'],
     }),
   }),
 });
 
 /**
  * 4. Xuất khẩu các Custom Hooks tự động sinh ra bởi RTK Query.
- * Cách đặt tên hook theo chuẩn: use + [Tên endpoint] + [Query/Mutation]
- * - query: Thích hợp cho việc đọc dữ liệu (GET), có cơ chế cache.
- * - mutation: Thích hợp cho việc viết/sửa/xóa dữ liệu (POST, PUT, DELETE).
  */
 export const {
   useGetThemesQuery,
@@ -469,7 +336,4 @@ export const {
   useActivateLicenseMutation,
   useDeactivateLicenseMutation,
   usePurchaseThemesMutation,
-  useCreateThemeMutation,
-  useUpdateThemeMutation,
-  useDeleteThemeMutation,
 } = themeApi;

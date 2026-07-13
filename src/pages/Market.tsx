@@ -5,13 +5,20 @@ import { SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
-import { addToCart, setSearchQuery, setSelectedCategory } from '../store/themeSlice';
+import { addToCart, setSearchQuery, setSelectedCategory, setSelectedPackage } from '../store/themeSlice';
 import { ThemeItem, useGetThemesQuery } from '../store/themeApi';
 import ThemeCard from '../components/ThemeCard';
 
 const { Title, Text, Paragraph } = Typography;
 
-const CATEGORIES = ['All', 'E-Commerce', 'SaaS', 'Portfolio', 'News'];
+const SERVICES_PACKAGES = [
+  { key: 'All', name: 'Tất cả gói' },
+  { key: 'landing', name: 'Gói Landing Page' },
+  { key: 'clone', name: 'Gói Clone & Vibe' },
+  { key: 'basic', name: 'Gói Cơ Bản' },
+  { key: 'store', name: 'Gói Bán Hàng' },
+  { key: 'premium', name: 'Gói Cao Cấp' },
+];
 
 const Market: React.FC = () => {
   // dispatch: Dùng để bắn (gửi) các action lên Redux Store để thay đổi state
@@ -21,11 +28,30 @@ const Market: React.FC = () => {
   
   // useSelector: Lấy state hiện tại từ Redux Store. Ở đây ta lấy từ khóa tìm kiếm và danh mục đang chọn.
   // Mỗi khi state trong store thay đổi, component này sẽ tự động re-render (cập nhật lại UI).
-  const { searchQuery, selectedCategory } = useSelector((state: RootState) => state.themeUI);
+  const { searchQuery, selectedCategory, selectedPackage } = useSelector((state: RootState) => state.themeUI);
 
-  // RTK Query Hook: Tự động fetch dữ liệu danh sách theme từ API (Supabase/Mock)
-  // Tính năng xịn: Tự động quản lý cờ trạng thái `isLoading` (đang tải) và `error` (lỗi mạng) cho ta.
+  // RTK Query Hook: Tự động fetch dữ liệu danh sách theme từ API
   const { data: themes = [], isLoading, error } = useGetThemesQuery();
+
+  // Gom động danh mục từ tất cả các tags của themes đang có để hiển thị bộ lọc
+  const categoriesList = React.useMemo(() => {
+    const list = new Set<string>();
+    themes.forEach(t => {
+      if (t.tags && Array.isArray(t.tags)) {
+        t.tags.forEach(tag => {
+          if (tag) list.add(tag);
+        });
+      }
+    });
+    return ['All', ...Array.from(list)];
+  }, [themes]);
+
+  // Reset danh mục lọc nếu danh mục đang chọn không còn nằm trong danh sách danh mục thực tế
+  React.useEffect(() => {
+    if (selectedCategory !== 'All' && !categoriesList.includes(selectedCategory)) {
+      dispatch(setSelectedCategory('All'));
+    }
+  }, [categoriesList, selectedCategory, dispatch]);
 
   // Hàm xử lý khi người dùng gõ vào ô tìm kiếm
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,42 +70,25 @@ const Market: React.FC = () => {
     message.success(`Đã thêm ${theme.name} vào giỏ hàng thành công!`);
   };
 
-  // Filter (Lọc) danh sách themes dựa trên từ khóa tìm kiếm HOẶC danh mục đã chọn
-  // Đây là Derived Data (Dữ liệu phái sinh), tính toán lại mỗi khi `themes`, `searchQuery` hoặc `selectedCategory` thay đổi
+  // Filter (Lọc) danh sách themes dựa trên từ khóa tìm kiếm HOẶC danh mục đã chọn HOẶC gói dịch vụ
   const filteredThemes = themes.filter((t) => {
     // So sánh không phân biệt hoa thường bằng toLowerCase()
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || t.tags.includes(selectedCategory) || t.tags.some(tag => tag.includes(selectedCategory));
+    const matchesCategory = selectedCategory === 'All' || 
+                          (t.tags && t.tags.some(tag => tag.toLowerCase() === selectedCategory.toLowerCase()));
+    const matchesPackage = selectedPackage === 'All' || t.servicePackage === selectedPackage;
     
-    // Theme phải thỏa mãn CẢ HAI điều kiện: khớp tên/mô tả VÀ khớp danh mục
-    return matchesSearch && matchesCategory;
+    // Theme phải thỏa mãn CẢ BA điều kiện: khớp tên/mô tả VÀ khớp danh mục VÀ khớp gói
+    return matchesSearch && matchesCategory && matchesPackage;
   });
 
   return (
     <div style={{ paddingBottom: '40px' }}>
-      {/* Hero Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)',
-          borderRadius: '24px',
-          padding: '60px 40px',
-          textAlign: 'center',
-          marginBottom: '40px',
-          border: '1px solid rgba(99, 102, 241, 0.1)',
-        }}
-      >
-        <Title level={1} style={{ margin: 0, fontWeight: 800, fontSize: '38px', color: '#1e1b4b' }}>
-          Premium WordPress Themes Marketplace
-        </Title>
-        <Paragraph style={{ fontSize: '16px', color: '#475569', marginTop: '12px', maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
-          Tải các theme WordPress chất lượng cao, chuẩn SEO, đạt điểm Core Web Vitals tuyệt đối và dễ dàng kích hoạt, quản lý key bản quyền tại đây.
-        </Paragraph>
-      </div>
-
       {/* Filter and Search Bar */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '32px' }} align="middle" justify="space-between">
-        <Col xs={24} md={10}>
+      {/* Hàng 1: Tìm kiếm và Lọc Lĩnh vực */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '20px' }} align="middle">
+        <Col xs={24} md={8}>
           <Input
             prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
             placeholder="Tìm kiếm theme..."
@@ -90,27 +99,68 @@ const Market: React.FC = () => {
             style={{ borderRadius: '10px' }}
           />
         </Col>
-        <Col xs={24} md={14} style={{ textAlign: 'right' }}>
-          <Space wrap size={8}>
-            {CATEGORIES.map((cat) => (
-              <Tag.CheckableTag
-                key={cat}
-                checked={selectedCategory === cat}
-                onChange={() => handleCategorySelect(cat)}
-                style={{
-                  fontSize: '14px',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(0, 0, 0, 0.08)',
-                  cursor: 'pointer',
-                  backgroundColor: selectedCategory === cat ? '#6366f1' : 'transparent',
-                  color: selectedCategory === cat ? '#fff' : '#595959',
-                }}
-              >
-                {cat}
-              </Tag.CheckableTag>
-            ))}
-          </Space>
+        <Col xs={24} md={16}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Lĩnh vực:</span>
+            <Space wrap size={4}>
+              {categoriesList.map((cat) => (
+                <Tag.CheckableTag
+                  key={cat}
+                  checked={selectedCategory === cat}
+                  onChange={() => handleCategorySelect(cat)}
+                  style={{
+                    fontSize: '13px',
+                    padding: '4px 12px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    cursor: 'pointer',
+                    backgroundColor: selectedCategory === cat ? '#6366f1' : '#fff',
+                    color: selectedCategory === cat ? '#fff' : '#64748b',
+                  }}
+                >
+                  {cat}
+                </Tag.CheckableTag>
+              ))}
+            </Space>
+          </div>
+        </Col>
+      </Row>
+
+      {/* Hàng 2: Lọc Gói dịch vụ thiết kế */}
+      <Row style={{ marginBottom: '32px' }}>
+        <Col span={24}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            flexWrap: 'wrap', 
+            background: 'rgba(99, 102, 241, 0.03)', 
+            padding: '12px 16px', 
+            borderRadius: '12px', 
+            border: '1px solid rgba(99, 102, 241, 0.08)' 
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#4f46e5' }}>Gói dịch vụ:</span>
+            <Space wrap size={4}>
+              {SERVICES_PACKAGES.map((pkg) => (
+                <Tag.CheckableTag
+                  key={pkg.key}
+                  checked={selectedPackage === pkg.key}
+                  onChange={() => dispatch(setSelectedPackage(pkg.key))}
+                  style={{
+                    fontSize: '13px',
+                    padding: '4px 12px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    cursor: 'pointer',
+                    backgroundColor: selectedPackage === pkg.key ? '#4f46e5' : '#fff',
+                    color: selectedPackage === pkg.key ? '#fff' : '#64748b',
+                  }}
+                >
+                  {pkg.name}
+                </Tag.CheckableTag>
+              ))}
+            </Space>
+          </div>
         </Col>
       </Row>
 

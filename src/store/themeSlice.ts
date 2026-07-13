@@ -19,6 +19,7 @@ interface CartItem {
 interface ThemeUIState {
   searchQuery: string;          // Từ khóa tìm kiếm theme hiện tại
   selectedCategory: string;     // Danh mục theme đang được lọc (Ví dụ: 'All', 'Landing', 'Blog'...)
+  selectedPackage: string;      // Gói dịch vụ thiết kế website đang được lọc ('All', 'landing', 'clone'...)
   cart: CartItem[];             // Danh sách các theme đã thêm vào Giỏ hàng
   currentDashboardTab: string;  // Tab đang hoạt động trong trang Dashboard quản trị
 }
@@ -30,6 +31,7 @@ interface ThemeUIState {
 const initialState: ThemeUIState = {
   searchQuery: '',
   selectedCategory: 'All',
+  selectedPackage: 'All',
   cart: [],
   currentDashboardTab: 'themes',
 };
@@ -55,6 +57,11 @@ export const themeSlice = createSlice({
     setSelectedCategory: (state, action: PayloadAction<string>) => {
       // action.payload chứa tên danh mục mới (ví dụ: 'E-commerce')
       state.selectedCategory = action.payload;
+    },
+
+    // Hàm cập nhật gói dịch vụ được chọn để hiển thị
+    setSelectedPackage: (state, action: PayloadAction<string>) => {
+      state.selectedPackage = action.payload;
     },
 
     // Hàm thêm sản phẩm (theme) vào giỏ hàng
@@ -99,6 +106,7 @@ export const themeSlice = createSlice({
 export const {
   setSearchQuery,
   setSelectedCategory,
+  setSelectedPackage,
   addToCart,
   removeFromCart,
   clearCart,

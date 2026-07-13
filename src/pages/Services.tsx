@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 // Import các UI Components từ thư viện Ant Design
 import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal, Tag, Carousel, Checkbox, Form, Input, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setSelectedPackage, setSelectedCategory } from '../store/themeSlice';
 // Import các Icons từ Ant Design để minh họa tính năng trực quan
 import {
   CheckOutlined,
@@ -14,7 +16,8 @@ import {
   RocketOutlined,
   LeftOutlined,
   RightOutlined,
-  PlusOutlined
+  PlusOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
@@ -65,6 +68,7 @@ const EXTRA_SERVICES: ExtraServiceOption[] = [
  * Interface cấu trúc dữ liệu cho mỗi gói dịch vụ thiết kế website
  */
 interface PricingPlan {
+  key: string;
   title: string;
   price: number;
   originalPrice?: number; // Giá gốc ban đầu trước khi giảm giá
@@ -123,6 +127,7 @@ const getCommitments = (timeFrame: string, editor = 'Giao diện Elementor Pro c
 // Định nghĩa 5 gói dịch vụ thiết kế website với giá bán thực tế tối thiểu và giá gốc chiết khấu 25-29%
 const PLANS: PricingPlan[] = [
   {
+    key: 'landing',
     title: 'Gói Landing Page',
     price: 800000, // Giá bán mới: 800k (phù hợp phễu thu hút khách chạy QC, giới thiệu sản phẩm đơn giản)
     originalPrice: 1100000, // Giá gốc: 1.1M (~27% giảm giá)
@@ -140,6 +145,7 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
+    key: 'clone',
     title: 'Gói Clone & Vibe',
     price: 1300000, // Giá bán mới: 1tr3 (tối ưu cho khách hàng muốn làm web sao chép giao diện mẫu có sẵn)
     originalPrice: 1800000, // Giá gốc: 1.8M (~28% giảm giá)
@@ -155,6 +161,7 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
+    key: 'basic',
     title: 'Gói Cơ Bản',
     price: 1500000, // Giá bán mới: 1tr5 (lựa chọn cân bằng nhất cho các website giới thiệu công ty/dịch vụ)
     originalPrice: 2100000, // Giá gốc: 2.1M (~28% giảm giá)
@@ -171,6 +178,7 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
+    key: 'store',
     title: 'Gói Bán Hàng',
     price: 2300000, // Giá bán mới: 2tr3 (giá siêu cạnh tranh cho cửa hàng eCommerce tích hợp thanh toán tự động)
     originalPrice: 3200000, // Giá gốc: 3.2M (~28% giảm giá)
@@ -187,6 +195,7 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
+    key: 'premium',
     title: 'Gói Cao Cấp',
     price: 6000000, // Giá bán mới: 6tr (gói thiết kế độc quyền Figma, custom từ A-Z cho phân khúc VIP)
     originalPrice: 8500000, // Giá gốc: 8.5M (~29% giảm giá)
@@ -209,8 +218,15 @@ const PLANS: PricingPlan[] = [
 
 const Services: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   // Khởi tạo ref để điều khiển slider của Ant Design Carousel programmatically
   const carouselRef = useRef<any>(null);
+
+  const handleViewSamples = (packageKey: string) => {
+    dispatch(setSelectedPackage(packageKey));
+    dispatch(setSelectedCategory('All'));
+    navigate('/themes');
+  };
 
   // State quản lý đuôi tên miền được chọn cho từng gói
   const [selectedDomains, setSelectedDomains] = useState<Record<string, string>>({
@@ -812,6 +828,23 @@ const Services: React.FC = () => {
 
                   {/* Nút Hành động */}
                   <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <Button
+                      type="default"
+                      size="middle"
+                      block
+                      icon={<EyeOutlined />}
+                      onClick={() => handleViewSamples(plan.key)}
+                      style={{
+                        height: '38px',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                        borderColor: '#4f46e5',
+                        color: '#4f46e5',
+                        background: 'rgba(79, 70, 229, 0.05)',
+                      }}
+                    >
+                      Xem Giao Diện Mẫu
+                    </Button>
                     <Button
                       type="default"
                       size="middle"
