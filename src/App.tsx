@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography, Drawer, Spin } from 'antd';
-import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined, MenuOutlined } from '@ant-design/icons';
+import { ShopOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined, MenuOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import { useCartSync } from './hooks/useCartSync';
@@ -15,7 +15,6 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const Services = lazy(() => import('./pages/Services'));
 const TemplatesPreview = lazy(() => import('./pages/TemplatesPreview'));
 const AdminThemes = lazy(() => import('./admin/Themes'));
-const AdminLicenses = lazy(() => import('./admin/Licenses'));
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -121,7 +120,7 @@ const App: React.FC = () => {
                 WPHub
               </Title>
               <Text type="secondary" className="logo-subtitle" style={{ fontSize: '10px', display: 'block', marginTop: '2px' }}>
-                THEME HUB & LICENSE MANAGER
+                PREMIUM THEMES MARKETPLACE
               </Text>
             </div>
           </Link>
@@ -138,11 +137,6 @@ const App: React.FC = () => {
                 key: 'market',
                 icon: <ShopOutlined />,
                 label: <Link to="/themes">Theme Market</Link>,
-              },
-              isAdmin && {
-                key: 'licenses',
-                icon: <DashboardOutlined />,
-                label: <Link to="/admin/licenses">License Manager</Link>,
               },
               isAdmin && {
                 key: 'admin-themes',
@@ -232,7 +226,6 @@ const App: React.FC = () => {
                 <Route path="/templates-preview" element={<TemplatesPreview />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/admin/licenses" element={<AdminLicenses />} />
                 <Route path="/admin/themes" element={<AdminThemes />} />
               </Routes>
             </Suspense>
@@ -243,7 +236,7 @@ const App: React.FC = () => {
         <LiveChat />
 
         <Footer style={{ textAlign: 'center', background: 'transparent', borderTop: '1px solid rgba(0, 0, 0, 0.05)', color: '#8c8c8c' }}>
-          WPHub ©{new Date().getFullYear()} - Premium WordPress Themes & Activation Management System
+          WPHub ©{new Date().getFullYear()} - Premium WordPress Themes Marketplace
         </Footer>
       </Layout>
     </ConfigProvider>

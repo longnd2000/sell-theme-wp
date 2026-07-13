@@ -230,7 +230,7 @@ const ThemeDetail: React.FC = () => {
               }}
             >
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <Text type="secondary" style={{ fontSize: '12px', textTransform: 'uppercase', tracking: '0.1em' }}>GIÁ KHỞI TẠO LICENSE</Text>
+                <Text type="secondary" style={{ fontSize: '12px', textTransform: 'uppercase', tracking: '0.1em' }}>GIÁ KHỞI TẠO WEBSITE</Text>
                 {themeItem.originalPrice && themeItem.originalPrice > themeItem.price ? (
                   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: '8px', marginTop: '8px' }}>
                     <Text delete type="secondary" style={{ fontSize: '16px' }}>

@@ -70,13 +70,8 @@ export const themeApi = createApi({
         try {
           const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
-            headers: {
-              'X-LX-API-Token': apiToken
-            }
-          });
+          const response = await fetch(wpApiUrl);
 
           if (!response.ok) {
             throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
@@ -126,13 +121,8 @@ export const themeApi = createApi({
         try {
           const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes/${id}`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
-            headers: {
-              'X-LX-API-Token': apiToken
-            }
-          });
+          const response = await fetch(wpApiUrl);
 
           if (!response.ok) {
             throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
@@ -177,151 +167,27 @@ export const themeApi = createApi({
      * hook tương ứng: useGetLicensesQuery()
      */
     getLicenses: builder.query<UserLicense[], void>({
-      async queryFn() {
-        try {
-          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
-          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
-
-          const response = await fetch(wpApiUrl, {
-            headers: {
-              'X-LX-API-Token': apiToken
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`Lỗi kết nối API WordPress: ${response.status} ${response.statusText}`);
-          }
-
-          const rawData = await response.json();
-          return { data: rawData as UserLicense[] };
-        } catch (err: any) {
-          return { 
-            error: { 
-              status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi khi tải thông tin bản quyền từ WordPress.' 
-            } 
-          };
-        }
-      },
-      providesTags: ['Licenses'],
+      queryFn() {
+        return { data: [] };
+      }
     }),
 
-    /**
-     * ENDPOINT 4: Đăng ký kích hoạt license trên tên miền (domain) cụ thể
-     * hook tương ứng: useActivateLicenseMutation()
-     */
     activateLicense: builder.mutation<UserLicense, { licenseKey: string; domain: string }>({
-      async queryFn({ licenseKey, domain }) {
-        try {
-          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
-          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/activate`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
-
-          const response = await fetch(wpApiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-LX-API-Token': apiToken
-            },
-            body: JSON.stringify({ licenseKey, domain })
-          });
-
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || `Lỗi kích hoạt: ${response.status}`);
-          }
-
-          const data = await response.json();
-          return { data: data as UserLicense };
-        } catch (err: any) {
-          return { 
-            error: { 
-              status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi kích hoạt bản quyền từ WordPress REST API.' 
-            } 
-          };
-        }
-      },
-      invalidatesTags: ['Licenses'],
+      queryFn() {
+        return { data: {} as UserLicense };
+      }
     }),
 
-    /**
-     * ENDPOINT 5: Ngắt kết nối domain khỏi key bản quyền
-     * hook tương ứng: useDeactivateLicenseMutation()
-     */
     deactivateLicense: builder.mutation<{ success: boolean }, { licenseKey: string }>({
-      async queryFn({ licenseKey }) {
-        try {
-          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
-          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/deactivate`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
-
-          const response = await fetch(wpApiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-LX-API-Token': apiToken
-            },
-            body: JSON.stringify({ licenseKey })
-          });
-
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || `Lỗi hủy kích hoạt: ${response.status}`);
-          }
-
-          const data = await response.json();
-          return { data: data as { success: boolean } };
-        } catch (err: any) {
-          return { 
-            error: { 
-              status: 'CUSTOM_ERROR', 
-              error: err.message || 'Lỗi ngắt kích hoạt bản quyền từ WordPress REST API.' 
-            } 
-          };
-        }
-      },
-      invalidatesTags: ['Licenses'],
+      queryFn() {
+        return { data: { success: true } };
+      }
     }),
 
-    /**
-     * ENDPOINT 6: Tạo key bản quyền mới tự động khi khách đặt hàng thành công
-     * hook tương ứng: usePurchaseThemesMutation()
-     */
     purchaseThemes: builder.mutation<{ success: boolean; licenses: UserLicense[] }, { themes: { id: string; name: string }[] }>({
-      async queryFn({ themes }) {
-        try {
-          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
-          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/purchase`;
-          const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
-
-          const response = await fetch(wpApiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-LX-API-Token': apiToken
-            },
-            body: JSON.stringify({ themes })
-          });
-
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.message || `Lỗi đặt mua: ${response.status}`);
-          }
-
-          const data = await response.json();
-          return { data: data as { success: boolean; licenses: UserLicense[] } };
-        } catch (err: any) {
-          return {
-            error: {
-              status: 'CUSTOM_ERROR',
-              error: err.message || 'Lỗi tạo bản quyền trên WordPress REST API.'
-            }
-          };
-        }
-      },
-      invalidatesTags: ['Licenses'],
+      queryFn() {
+        return { data: { success: true, licenses: [] } };
+      }
     }),
 
     // Các Mock Mutations bổ sung để tương thích ngược và đảm bảo ứng dụng compile thành công
