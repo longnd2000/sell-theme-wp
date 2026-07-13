@@ -120,12 +120,12 @@ const getCommitments = (timeFrame: string, editor = 'Giao diện Elementor Pro c
   return commitments;
 };
 
-// Định nghĩa 5 gói dịch vụ thiết kế website với giá bán thực tế tối thiểu và giá gốc chiết khấu 25%
+// Định nghĩa 5 gói dịch vụ thiết kế website với giá bán thực tế tối thiểu và giá gốc chiết khấu 25-29%
 const PLANS: PricingPlan[] = [
   {
     title: 'Gói Landing Page',
-    price: 999000,
-    originalPrice: 1350000, // Chiết khấu ~26%
+    price: 800000, // Giá bán mới: 800k (phù hợp phễu thu hút khách chạy QC, giới thiệu sản phẩm đơn giản)
+    originalPrice: 1100000, // Giá gốc: 1.1M (~27% giảm giá)
     description: 'Tối ưu cho doanh nghiệp, cá nhân cần trang Landing Page đơn phục vụ chạy quảng cáo, giới thiệu sản phẩm, dịch vụ.',
     icon: <RocketOutlined style={{ fontSize: '28px', color: '#06b6d4' }} />,
     color: '#06b6d4',
@@ -141,8 +141,8 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Clone & Vibe',
-    price: 1499000,
-    originalPrice: 2000000, // Chiết khấu 25%
+    price: 1300000, // Giá bán mới: 1tr3 (tối ưu cho khách hàng muốn làm web sao chép giao diện mẫu có sẵn)
+    originalPrice: 1800000, // Giá gốc: 1.8M (~28% giảm giá)
     description: 'Dành riêng cho đơn vị cần clone giao diện theo mẫu và ghép backend WordPress để khách tự nhập liệu dễ dàng.',
     icon: <CopyOutlined style={{ fontSize: '28px', color: '#8b5cf6' }} />,
     color: '#8b5cf6',
@@ -156,8 +156,8 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Cơ Bản',
-    price: 1999000,
-    originalPrice: 2700000, // Chiết khấu ~26%
+    price: 1500000, // Giá bán mới: 1tr5 (lựa chọn cân bằng nhất cho các website giới thiệu công ty/dịch vụ)
+    originalPrice: 2100000, // Giá gốc: 2.1M (~28% giảm giá)
     description: 'Phù hợp cho các dự án giới thiệu cá nhân, shop nhỏ hoặc landing page giới thiệu sản phẩm đơn giản.',
     icon: <ThunderboltOutlined style={{ fontSize: '28px', color: '#10b981' }} />,
     color: '#10b981',
@@ -172,8 +172,8 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Bán Hàng',
-    price: 2999000,
-    originalPrice: 4000000, // Chiết khấu 25%
+    price: 2300000, // Giá bán mới: 2tr3 (giá siêu cạnh tranh cho cửa hàng eCommerce tích hợp thanh toán tự động)
+    originalPrice: 3200000, // Giá gốc: 3.2M (~28% giảm giá)
     description: 'Giải pháp tối ưu cho việc mở các shop, cửa hàng bán hàng chuyên nghiệp có tích hợp giỏ hàng và thanh toán trực tuyến.',
     icon: <FireOutlined style={{ fontSize: '28px', color: '#6366f1' }} />,
     color: '#6366f1',
@@ -188,8 +188,8 @@ const PLANS: PricingPlan[] = [
   },
   {
     title: 'Gói Cao Cấp',
-    price: 5999000,
-    originalPrice: 8000000, // Chiết khấu 25%
+    price: 6000000, // Giá bán mới: 6tr (gói thiết kế độc quyền Figma, custom từ A-Z cho phân khúc VIP)
+    originalPrice: 8500000, // Giá gốc: 8.5M (~29% giảm giá)
     description: 'Thiết kế độc quyền, lập trình trực tiếp từ bản vẽ thiết kế Figma (chuyển thiết kế Figma thành Html/css/js). Tốc độ cực hạn.',
     icon: <CrownOutlined style={{ fontSize: '28px', color: '#f59e0b' }} />,
     color: '#f59e0b',
@@ -198,7 +198,7 @@ const PLANS: PricingPlan[] = [
       'Lập trình giao diện riêng biệt từ bản vẽ Figma (chuyển thiết kế Figma thành Html/css/js)',
       'Clone giao diện từ website mẫu hoặc thiết kế theo yêu cầu',
       'Không giới hạn số lượng trang nội dung',
-      'Hỗ trợ cấu hình đa ngôn ngữ (+200.000 đ)',
+      'Hỗ trợ cấu hình đa ngôn ngữ miễn phí', // Đổi từ (+200k) thành miễn phí để khớp đồng bộ với bảng so sánh tính năng
       'Hỗ trợ kết nối cổng thanh toán VNPay và SePay',
       'Lập trình ghép Backend WordPress dễ nhập liệu',
       'Tương thích đa thiết bị',
@@ -230,7 +230,7 @@ const Services: React.FC = () => {
     'Gói Cao Cấp': 'basic01',
   });
 
-  // State quản lý xem gói dịch vụ đó khách hàng đã có tên miền & hosting hay chưa để trừ 300k
+  // State quản lý xem gói dịch vụ đó khách hàng đã có tên miền & hosting hay chưa để trừ 200k
   const [hasDomainHosting, setHasDomainHosting] = useState<Record<string, boolean>>({
     'Gói Clone & Vibe': false,
     'Gói Landing Page': false,
@@ -659,7 +659,7 @@ const Services: React.FC = () => {
                       if (plan.title === 'Gói Landing Page') percent = 80;
                       else if (plan.title === 'Gói Clone & Vibe') percent = 70;
                       else if (plan.title === 'Gói Cơ Bản') percent = 80;
-                      else if (plan.title === 'Gói Phổ Biến') percent = 85;
+                      else if (plan.title === 'Gói Bán Hàng') percent = 85; // Thay thế Gói Phổ Biến bằng Gói Bán Hàng để khớp với cấu trúc gói thực tế
                       else if (plan.title === 'Gói Cao Cấp') percent = 80;
 
                       return (
