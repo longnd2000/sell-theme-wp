@@ -42,7 +42,7 @@ export const ArchiveDemo: React.FC<ArchiveDemoProps> = ({ onBack }) => {
           <Col xs={24} md={6}>
             <Card 
               title={<span style={{ fontWeight: 800, fontSize: '15px' }}><FilterOutlined /> Bộ lọc sản phẩm</span>}
-              bordered={false} 
+              variant="borderless" 
               style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}
             >
               {/* Danh mục */}
@@ -131,7 +131,7 @@ export const ArchiveDemo: React.FC<ArchiveDemoProps> = ({ onBack }) => {
                 <Col xs={24} sm={12} lg={8} key={p.id}>
                   <Card
                     hoverable
-                    bordered={false}
+                    variant="borderless"
                     cover={
                       <div style={{ height: '180px', overflow: 'hidden', padding: '16px', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img 

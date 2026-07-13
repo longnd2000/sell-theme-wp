@@ -31,7 +31,9 @@ const ThemeDetail: React.FC = () => {
   if (isLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '120px 0' }}>
-        <Spin size="large" tip="Đang tải chi tiết theme..." />
+        <Spin size="large">
+          <div style={{ marginTop: '16px', color: '#6366f1', fontWeight: 600 }}>Đang tải chi tiết theme...</div>
+        </Spin>
       </div>
     );
   }
@@ -126,7 +128,7 @@ const ThemeDetail: React.FC = () => {
         <Col xs={24} lg={8}>
           <div style={{ position: 'sticky', top: '88px' }}>
             <Card 
-              bordered={false} 
+              variant="borderless" 
               style={{ 
                 borderRadius: '20px', 
                 boxShadow: '0 10px 30px rgba(0,0,0,0.04)',

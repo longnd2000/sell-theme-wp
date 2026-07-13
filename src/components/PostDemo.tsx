@@ -111,7 +111,7 @@ export const PostDemo: React.FC<PostDemoProps> = ({ onBack }) => {
           <Col xs={24} lg={7}>
             <Space direction="vertical" size="middle" style={{ width: '100%', position: 'sticky', top: '90px' }}>
               {/* Box tác giả */}
-              <Card bordered={false} style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}>
+              <Card variant="borderless" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(to right, #6366f1, #a855f7)', margin: '0 auto 12px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '24px', fontWeight: 700 }}>
                     <span style={{ margin: 'auto' }}>A</span>
@@ -127,7 +127,7 @@ export const PostDemo: React.FC<PostDemoProps> = ({ onBack }) => {
               {/* Box Mục lục tự động (TOC) */}
               <Card 
                 title={<span style={{ fontWeight: 700, fontSize: '14px' }}>Mục lục bài viết</span>} 
-                bordered={false} 
+                variant="borderless" 
                 style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}
                 styles={{ body: { padding: '12px 20px' } }}
               >

@@ -532,7 +532,7 @@ const Services: React.FC = () => {
               <div key={plan.title} style={{ height: '100%' }}>
                 <Card
                   hoverable
-                  bordered={false}
+                  variant="borderless"
                   className="pricing-card"
                   style={{
                     borderRadius: '24px',
@@ -867,9 +867,239 @@ const Services: React.FC = () => {
         </Carousel>
       </div>
 
+      <style>{`
+        .comparison-table-wrapper {
+          overflow-x: auto;
+          margin-bottom: 48px;
+          border-radius: 16px;
+          border: 1px solid rgba(0,0,0,0.05);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+          background: #fff;
+        }
+        .comparison-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+          min-width: 800px;
+        }
+        .comparison-table th, .comparison-table td {
+          padding: 14px 16px;
+          border-bottom: 1px solid #f1f5f9;
+          font-size: 13px;
+        }
+        .comparison-table th {
+          background: #f8fafc;
+          font-weight: 700;
+          color: #1e293b;
+        }
+        .comparison-table tr.category-row td {
+          background: #f1f5f9 !important;
+          font-weight: 800;
+          color: #475569;
+          font-size: 11.5px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          padding: 10px 16px;
+        }
+        .comparison-table td.feature-name {
+          font-weight: 600;
+          color: #334155;
+          background: #fff;
+        }
+        .comparison-table th.feature-name-header {
+          background: #f8fafc;
+        }
+        .comparison-table td.plan-cell {
+          text-align: center;
+          color: #475569;
+        }
+        .comparison-table tr:hover td {
+          background-color: #f8fafc;
+        }
+        .comparison-table tr:hover td.feature-name {
+          background-color: #f8fafc;
+        }
+      `}</style>
+
+      {/* Bảng so sánh chi tiết các gói */}
+      <div style={{ marginTop: '32px', marginBottom: '48px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <Title level={3} style={{ fontWeight: 800, color: '#1e293b', marginBottom: '8px' }}>
+            Bảng So Sánh Chi Tiết Các Gói
+          </Title>
+          <Text type="secondary" style={{ fontSize: '14px', color: '#64748b' }}>
+            So sánh chi tiết từng hạng mục thiết kế, tính năng và cam kết dịch vụ giữa các gói để đưa ra lựa chọn phù hợp nhất
+          </Text>
+        </div>
+
+        <div className="comparison-table-wrapper">
+          <table className="comparison-table">
+            <thead>
+              <tr>
+                <th className="feature-name-header" style={{ width: '220px' }}>Hạng mục so sánh</th>
+                <th style={{ textAlign: 'center', color: '#06b6d4' }}>Gói Landing Page</th>
+                <th style={{ textAlign: 'center', color: '#8b5cf6' }}>Gói Clone & Vibe</th>
+                <th style={{ textAlign: 'center', color: '#10b981' }}>Gói Cơ Bản</th>
+                <th style={{ textAlign: 'center', color: '#6366f1' }}>Gói Bán Hàng</th>
+                <th style={{ textAlign: 'center', color: '#f59e0b' }}>Gói Cao Cấp</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Category: THIẾT KẾ & LAYOUT */}
+              <tr className="category-row">
+                <td colSpan={6} className="feature-name">Thiết kế & Layout</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Số lượng trang tối đa</td>
+                <td className="plan-cell">1 trang Landing Page</td>
+                <td className="plan-cell">Tùy theo mẫu clone</td>
+                <td className="plan-cell">5 trang cơ bản</td>
+                <td className="plan-cell">10 trang bán hàng</td>
+                <td className="plan-cell">Không giới hạn</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Nền tảng & Theme sử dụng</td>
+                <td className="plan-cell">WordPress + Theme LX Landing</td>
+                <td className="plan-cell">WordPress (Custom/Clone)</td>
+                <td className="plan-cell">WordPress + Theme LX Landing</td>
+                <td className="plan-cell">WordPress + Theme LX Landing</td>
+                <td className="plan-cell">Figma to Code hoặc Thiết kế riêng</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Tương thích di động (Responsive)</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Giao diện kéo thả trực quan</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell" style={{ color: '#94a3b8' }}>Nhập liệu qua Custom Fields</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell">Custom Fields & Elementor</td>
+              </tr>
+
+              {/* Category: TÍNH NĂNG TÍCH HỢP */}
+              <tr className="category-row">
+                <td colSpan={6} className="feature-name">Tính năng tích hợp</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Liên hệ / Đăng ký qua Form</td>
+                <td className="plan-cell">Gửi Email, Zalo hoặc Google Sheets</td>
+                <td className="plan-cell">Gửi Email / Form cơ bản</td>
+                <td className="plan-cell">Gửi Email / Form liên hệ</td>
+                <td className="plan-cell">Form liên hệ & Tài khoản khách hàng</td>
+                <td className="plan-cell">Đa dạng, kết nối CRM/API yêu cầu</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Tích hợp giỏ hàng & đặt hàng</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Thanh toán tự động QR (VNPay, SePay)</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell" style={{ color: '#cbd5e1' }}>—</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Đa ngôn ngữ (Polylang)</td>
+                <td className="plan-cell" style={{ color: '#64748b' }}>Hỗ trợ (+200k)</td>
+                <td className="plan-cell" style={{ color: '#64748b' }}>Hỗ trợ (+200k)</td>
+                <td className="plan-cell" style={{ color: '#64748b' }}>Hỗ trợ (+200k)</td>
+                <td className="plan-cell" style={{ color: '#64748b' }}>Hỗ trợ (+200k)</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+
+              {/* Category: HẠ TẦNG & QUÀ TẶNG */}
+              <tr className="category-row">
+                <td colSpan={6} className="feature-name">Hạ tầng & Quà tặng</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Tên miền quốc tế miễn phí</td>
+                <td className="plan-cell">Tặng đuôi .top (1 năm đầu)</td>
+                <td className="plan-cell">Tặng đuôi .top (1 năm đầu)</td>
+                <td className="plan-cell">Tặng đuôi .top (1 năm đầu)</td>
+                <td className="plan-cell">Tặng đuôi .top (1 năm đầu)</td>
+                <td className="plan-cell">Tặng đuôi .top (1 năm đầu)</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Hosting SSD tốc độ cao</td>
+                <td className="plan-cell">Tặng gói Basic 01 (12 tháng)</td>
+                <td className="plan-cell">Tặng gói Basic 01 (12 tháng)</td>
+                <td className="plan-cell">Tặng gói Basic 01 (12 tháng)</td>
+                <td className="plan-cell">Tặng gói Basic 01 (12 tháng)</td>
+                <td className="plan-cell">Tặng gói Basic 01 (12 tháng)</td>
+              </tr>
+
+              {/* Category: BẢO HÀNH & HỖ TRỢ */}
+              <tr className="category-row">
+                <td colSpan={6} className="feature-name">Bảo hành & Hỗ trợ</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Thời gian hoàn thành dự tính</td>
+                <td className="plan-cell" style={{ fontWeight: 600 }}>2 - 3 ngày</td>
+                <td className="plan-cell" style={{ fontWeight: 600 }}>3 - 5 ngày</td>
+                <td className="plan-cell" style={{ fontWeight: 600 }}>3 - 5 ngày</td>
+                <td className="plan-cell" style={{ fontWeight: 600 }}>5 - 7 ngày</td>
+                <td className="plan-cell" style={{ fontWeight: 600 }}>10 - 15 ngày</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Bảo hành & Hỗ trợ kỹ thuật</td>
+                <td className="plan-cell">12 tháng</td>
+                <td className="plan-cell">12 tháng</td>
+                <td className="plan-cell">12 tháng</td>
+                <td className="plan-cell">12 tháng</td>
+                <td className="plan-cell">12 tháng</td>
+              </tr>
+              <tr>
+                <td className="feature-name">Sao lưu (Backup) hàng tuần</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Tối ưu tốc độ PageSpeed (GSI &gt; 80)</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Cấu hình bảo mật chống Spam/Brute force</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+              <tr>
+                <td className="feature-name">Bàn giao toàn bộ Source code & Quản trị</td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+                <td className="plan-cell"><CheckOutlined style={{ color: '#10b981', fontSize: '15px', fontWeight: 900 }} /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Trust section / banner */}
       <Card
-        bordered={false}
+        variant="borderless"
         className="glass-panel"
         style={{
           borderRadius: '20px',
@@ -1169,6 +1399,13 @@ const Services: React.FC = () => {
 
           return (
             <div>
+              {plan.description && (
+                <div style={{ marginBottom: '16px', padding: '0 8px' }}>
+                  <Text style={{ fontSize: '13.5px', color: '#475569', display: 'block', lineHeight: 1.5 }}>
+                    {plan.description}
+                  </Text>
+                </div>
+              )}
               <div className="modal-header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #f1f5f9', gap: '12px' }}>
                 <div>
                   <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>
@@ -1363,7 +1600,7 @@ const Services: React.FC = () => {
         open={!!openRegisterPlan}
         onCancel={() => setOpenRegisterPlan(null)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         centered
         width={520}
       >

@@ -54,7 +54,7 @@ const Checkout: React.FC = () => {
   if (purchaseSuccess) {
     return (
       <div style={{ maxWidth: '720px', margin: '0 auto', paddingBottom: '60px' }}>
-        <Card bordered={false} style={{ borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', padding: '24px' }}>
+        <Card variant="borderless" style={{ borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', padding: '24px' }}>
           <Result
             status="success"
             title="Thanh Toán Thành Công!"
@@ -152,7 +152,7 @@ const Checkout: React.FC = () => {
       <Row gutter={[32, 32]}>
         {/* Left Side: Form & Payment Instructions */}
         <Col xs={24} lg={14}>
-          <Card bordered={false} className="glass-panel" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', padding: '12px' }}>
+          <Card variant="borderless" className="glass-panel" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)', padding: '12px' }}>
             <Form form={form} layout="vertical" onFinish={handlePlaceOrder}>
               <Title level={4} style={{ fontWeight: 700, marginBottom: '20px' }}>1. Thông tin người mua</Title>
               <Row gutter={16}>
@@ -299,7 +299,7 @@ const Checkout: React.FC = () => {
         {/* Right Side: Order Summary */}
         <Col xs={24} lg={10}>
           <Card 
-            bordered={false} 
+            variant="borderless" 
             style={{ 
               borderRadius: '20px', 
               boxShadow: '0 10px 30px rgba(0,0,0,0.04)',

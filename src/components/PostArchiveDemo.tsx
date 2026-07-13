@@ -128,7 +128,7 @@ export const PostArchiveDemo: React.FC<PostArchiveDemoProps> = ({ onBack }) => {
           <Col xs={24} lg={7}>
             <Space direction="vertical" size="middle" style={{ width: '100%', position: 'sticky', top: '90px' }}>
               {/* Ô tìm kiếm */}
-              <Card bordered={false} style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}>
+              <Card variant="borderless" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}>
                 <Input
                   prefix={<SearchOutlined style={{ color: '#cbd5e1' }} />}
                   placeholder="Tìm bài viết..."
@@ -141,7 +141,7 @@ export const PostArchiveDemo: React.FC<PostArchiveDemoProps> = ({ onBack }) => {
               {/* Bài viết nổi bật */}
               <Card 
                 title={<span style={{ fontWeight: 800, fontSize: '14.5px' }}>Xem nhiều nhất</span>}
-                bordered={false} 
+                variant="borderless" 
                 style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}
               >
                 <List
@@ -162,7 +162,7 @@ export const PostArchiveDemo: React.FC<PostArchiveDemoProps> = ({ onBack }) => {
               {/* Tất cả chuyên mục */}
               <Card 
                 title={<span style={{ fontWeight: 800, fontSize: '14.5px' }}>Chuyên mục</span>}
-                bordered={false} 
+                variant="borderless" 
                 style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.01)', border: '1px solid rgba(0,0,0,0.04)' }}
               >
                 <List

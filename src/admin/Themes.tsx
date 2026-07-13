@@ -327,7 +327,7 @@ const AdminThemes: React.FC = () => {
 
       {/* Bảng danh sách */}
       <Card 
-        bordered={false} 
+        variant="borderless" 
         style={{ borderRadius: '24px', boxShadow: '0 4px 25px rgba(0, 0, 0, 0.02)', border: '1px solid rgba(0,0,0,0.03)' }}
         styles={{ body: { padding: '12px' } }}
       >
@@ -347,7 +347,7 @@ const AdminThemes: React.FC = () => {
         width={560}
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
-        destroyOnClose
+        destroyOnHidden
         styles={{ body: { paddingBottom: 80 } }}
         extra={
           <Space>

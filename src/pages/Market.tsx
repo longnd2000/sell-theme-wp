@@ -1,6 +1,7 @@
 import React from 'react';
-import { Row, Col, Input, Tag, Typography, Space, Empty, Spin } from 'antd';
+import { Row, Col, Input, Tag, Typography, Space, Empty, Spin, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+// Hooks của Redux để tương tác với Store
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../store';
@@ -13,31 +14,45 @@ const { Title, Text, Paragraph } = Typography;
 const CATEGORIES = ['All', 'E-Commerce', 'SaaS', 'Portfolio', 'News'];
 
 const Market: React.FC = () => {
+  // dispatch: Dùng để bắn (gửi) các action lên Redux Store để thay đổi state
   const dispatch = useDispatch();
+  // navigate: Dùng để chuyển hướng trang bằng code (VD: bấm nút -> chuyển sang trang chi tiết)
   const navigate = useNavigate();
+  
+  // useSelector: Lấy state hiện tại từ Redux Store. Ở đây ta lấy từ khóa tìm kiếm và danh mục đang chọn.
+  // Mỗi khi state trong store thay đổi, component này sẽ tự động re-render (cập nhật lại UI).
   const { searchQuery, selectedCategory } = useSelector((state: RootState) => state.themeUI);
 
-  // Fetch themes dynamically from Supabase (or mock fallback) using RTK Query
+  // RTK Query Hook: Tự động fetch dữ liệu danh sách theme từ API (Supabase/Mock)
+  // Tính năng xịn: Tự động quản lý cờ trạng thái `isLoading` (đang tải) và `error` (lỗi mạng) cho ta.
   const { data: themes = [], isLoading, error } = useGetThemesQuery();
 
+  // Hàm xử lý khi người dùng gõ vào ô tìm kiếm
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Lưu từ khóa tìm kiếm vào Redux Store để filter
     dispatch(setSearchQuery(e.target.value));
   };
 
+  // Hàm xử lý khi người dùng bấm chọn 1 danh mục (Tag)
   const handleCategorySelect = (category: string) => {
     dispatch(setSelectedCategory(category));
   };
 
+  // Hàm xử lý khi người dùng bấm nút "Mua" trên 1 thẻ Theme
   const handleAddToCart = (theme: ThemeItem) => {
     dispatch(addToCart({ id: theme.id, name: theme.name, price: theme.price, image: theme.image }));
     message.success(`Đã thêm ${theme.name} vào giỏ hàng thành công!`);
   };
 
-  // Filter themes based on search query and category selector
+  // Filter (Lọc) danh sách themes dựa trên từ khóa tìm kiếm HOẶC danh mục đã chọn
+  // Đây là Derived Data (Dữ liệu phái sinh), tính toán lại mỗi khi `themes`, `searchQuery` hoặc `selectedCategory` thay đổi
   const filteredThemes = themes.filter((t) => {
+    // So sánh không phân biệt hoa thường bằng toLowerCase()
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || t.tags.includes(selectedCategory) || t.tags.some(tag => tag.includes(selectedCategory));
+    
+    // Theme phải thỏa mãn CẢ HAI điều kiện: khớp tên/mô tả VÀ khớp danh mục
     return matchesSearch && matchesCategory;
   });
 
@@ -102,7 +117,9 @@ const Market: React.FC = () => {
       {/* Loading & Error States */}
       {isLoading && (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang tải danh sách theme..." />
+          <Spin size="large">
+            <div style={{ marginTop: '16px', color: '#6366f1', fontWeight: 600 }}>Đang tải danh sách theme...</div>
+          </Spin>
         </div>
       )}
 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 // Import các Component UI từ thư viện Ant Design để phục vụ xây dựng giao diện nhanh & đẹp
-import { Row, Col, Card, Statistic, Table, Tag, Button, Input, Modal, Form, Space, Popconfirm, Typography, Tooltip, Spin, message } from 'antd';
+import { Row, Col, Card, Statistic, Table, Tag, Button, Input, Modal, Form, Space, Popconfirm, Typography, Tooltip, Spin, message, Switch } from 'antd';
+import VirtualList from 'rc-virtual-list';
 // Import các Icon từ Ant Design để tăng tính trực quan cho các nút bấm & đề mục
 import { 
   KeyOutlined, 
@@ -41,6 +42,22 @@ const AdminLicenses: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('admin_logged_in') === 'true';
   });
+
+  // Chế độ demo Windowing (Render 5000+ dòng)
+  const [isWindowingMode, setIsWindowingMode] = useState(false);
+
+  // Tạo mock data khổng lồ (5000 dòng) chỉ được tính toán 1 lần nhờ useMemo
+  const hugeMockData = useMemo(() => {
+    return Array.from({ length: 5000 }, (_, i) => ({
+      id: `mock-${i}`,
+      licenseKey: `MOCK-${i}-KEY-2026`,
+      themeName: `Premium Theme ${i}`,
+      domain: i % 3 === 0 ? 'N/A' : `customer${i}.com`,
+      status: i % 2 === 0 ? 'active' : (i % 3 === 0 ? 'suspended' : 'expired') as 'active' | 'suspended' | 'expired',
+      activatedAt: '2026-01-01',
+      expiresAt: '2027-01-01',
+    }));
+  }, []);
 
   // Truy vấn danh sách license thời gian thực thông qua Custom Hook tự sinh của RTK Query.
   // data: Danh sách license trả về từ server, mặc định là mảng rỗng [] nếu chưa có dữ liệu.
@@ -362,12 +379,14 @@ const AdminLicenses: React.FC = () => {
       {/* Hàng thẻ thống kê chỉ số (Metrics cards) */}
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '24px' }}>
-          <Spin tip="Đang tải dữ liệu báo cáo..." />
+          <Spin>
+            <div style={{ marginTop: '8px', color: '#6366f1', fontWeight: 600 }}>Đang tải dữ liệu báo cáo...</div>
+          </Spin>
         </div>
       ) : (
         <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Tổng Key Bản Quyền"
                 value={licenses.length}
@@ -377,7 +396,7 @@ const AdminLicenses: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Website Đang Hoạt Động"
                 value={activeCount}
@@ -387,7 +406,7 @@ const AdminLicenses: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Key Chưa Kích Hoạt"
                 value={licenses.length - activeCount}
@@ -403,7 +422,15 @@ const AdminLicenses: React.FC = () => {
       <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <span style={{ fontWeight: 700, fontSize: '18px' }}>Danh sách Key Bản Quyền của Khách hàng</span>
+            <Space>
+              <span style={{ fontWeight: 700, fontSize: '18px' }}>Danh sách Key Bản Quyền của Khách hàng</span>
+              <Switch 
+                checkedChildren="Tắt Windowing" 
+                unCheckedChildren="Demo Windowing (5000 items)" 
+                checked={isWindowingMode} 
+                onChange={setIsWindowingMode} 
+              />
+            </Space>
             <Button
               type="primary"
               icon={<PlusOutlined />}
@@ -415,20 +442,51 @@ const AdminLicenses: React.FC = () => {
             </Button>
           </div>
         }
-        bordered={false}
+        variant="borderless"
         style={{
           boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
           borderRadius: '16px',
         }}
       >
-        <Table
-          columns={columns}
-          // Ánh xạ id làm thuộc tính key bắt buộc cho mỗi dòng dữ liệu của bảng
-          dataSource={licenses.map(lic => ({ ...lic, key: lic.id }))}
-          loading={isLoading}
-          pagination={false}
-          locale={{ emptyText: error ? 'Không thể kết nối đến máy chủ API.' : 'Không có key bản quyền nào.' }}
-        />
+        {isWindowingMode ? (
+          // Demo Windowing bằng rc-virtual-list cho dữ liệu cực lớn
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', background: '#f8fafc', padding: '12px 16px', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>
+              <div style={{ width: '25%' }}>Tên Theme</div>
+              <div style={{ width: '25%' }}>Key Bản Quyền</div>
+              <div style={{ width: '25%' }}>Domain</div>
+              <div style={{ width: '25%' }}>Trạng Thái</div>
+            </div>
+            <VirtualList
+              data={hugeMockData}
+              height={400}
+              itemHeight={54}
+              itemKey="id"
+            >
+              {(item: any) => (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', height: '54px', padding: '0 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '25%' }}><Text strong>{item.themeName}</Text></div>
+                  <div style={{ width: '25%' }}><code>{item.licenseKey}</code></div>
+                  <div style={{ width: '25%' }}>{item.domain}</div>
+                  <div style={{ width: '25%' }}>
+                    <Tag color={item.status === 'active' ? 'green' : (item.status === 'suspended' ? 'orange' : 'red')}>
+                      {item.status}
+                    </Tag>
+                  </div>
+                </div>
+              )}
+            </VirtualList>
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            // Ánh xạ id làm thuộc tính key bắt buộc cho mỗi dòng dữ liệu của bảng
+            dataSource={licenses.map(lic => ({ ...lic, key: lic.id }))}
+            loading={isLoading}
+            pagination={false}
+            locale={{ emptyText: error ? 'Không thể kết nối đến máy chủ API.' : 'Không có key bản quyền nào.' }}
+          />
+        )}
       </Card>
 
       {/* Modal Popup để kích hoạt tên miền mới */}
@@ -445,7 +503,7 @@ const AdminLicenses: React.FC = () => {
           form.resetFields();    // Reset form nhập liệu
         }}
         footer={null}
-        destroyOnClose // Hủy toàn bộ DOM con trong modal sau khi đóng để tránh cache form cũ
+        destroyOnHidden // Hủy toàn bộ DOM con trong modal sau khi đóng để tránh cache form cũ
       >
         <Form
           form={form}

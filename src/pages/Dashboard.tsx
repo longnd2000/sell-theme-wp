@@ -175,12 +175,14 @@ const Dashboard: React.FC = () => {
       {/* Metrics Row */}
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '24px' }}>
-          <Spin tip="Đang tải dữ liệu báo cáo..." />
+          <Spin>
+            <div style={{ marginTop: '8px', color: '#6366f1', fontWeight: 600 }}>Đang tải dữ liệu báo cáo...</div>
+          </Spin>
         </div>
       ) : (
         <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Tổng Theme Đã Mua"
                 value={licenses.length}
@@ -190,7 +192,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Website Đang Hoạt Động"
                 value={activeCount}
@@ -200,7 +202,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card bordered={false} className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <Statistic
                 title="Key Chưa Kích Hoạt"
                 value={licenses.length - activeCount}
@@ -227,7 +229,7 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
         }
-        bordered={false}
+        variant="borderless"
         style={{
           boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
           borderRadius: '16px',
@@ -256,7 +258,7 @@ const Dashboard: React.FC = () => {
           form.resetFields();
         }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

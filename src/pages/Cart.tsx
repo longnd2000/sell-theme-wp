@@ -1,4 +1,5 @@
 import React from 'react';
+// Import các hook của Redux để lấy dữ liệu (useSelector) và gửi action thay đổi dữ liệu (useDispatch)
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, List, Button, Typography, Space, Empty, Divider, Avatar, message } from 'antd';
@@ -9,15 +10,23 @@ import { removeFromCart } from '../store/themeSlice';
 const { Title, Text, Paragraph } = Typography;
 
 const Cart: React.FC = () => {
+  // 1. Lấy danh sách sản phẩm trong giỏ hàng từ Redux Store
+  // Mỗi khi store.themeUI.cart thay đổi (thêm/xóa), component này sẽ tự render lại để cập nhật giao diện
   const cart = useSelector((state: RootState) => state.themeUI.cart);
+  
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Dùng để chuyển trang khi bấm "Tiếp tục mua sắm" hoặc "Thanh toán"
 
+  // 2. Hàm xử lý xóa 1 sản phẩm khỏi giỏ hàng
   const handleRemoveItem = (id: string, name: string) => {
+    // Gửi action removeFromCart kèm theo id của sản phẩm cần xóa lên Redux Store
     dispatch(removeFromCart(id));
+    // Hiển thị thông báo Toast nhỏ góc màn hình
     message.warning(`Đã xóa ${name} khỏi giỏ hàng.`);
   };
 
+  // 3. Tính tổng tiền giỏ hàng (Derived data)
+  // Sử dụng hàm reduce() của mảng: duyệt qua từng item và cộng dồn thuộc tính price vào biến sum (khởi tạo bằng 0)
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
   return (
@@ -35,7 +44,7 @@ const Cart: React.FC = () => {
         <Row gutter={[32, 32]}>
           {/* Left: Cart Items List */}
           <Col xs={24} lg={16}>
-            <Card bordered={false} className="glass-panel" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
+            <Card variant="borderless" className="glass-panel" style={{ borderRadius: '20px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
               <List
                 itemLayout="horizontal"
                 dataSource={cart}
@@ -94,7 +103,7 @@ const Cart: React.FC = () => {
           {/* Right: Order Summary */}
           <Col xs={24} lg={8}>
             <Card
-              bordered={false}
+              variant="borderless"
               style={{
                 borderRadius: '20px',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
@@ -149,7 +158,7 @@ const Cart: React.FC = () => {
           </Col>
         </Row>
       ) : (
-        <Card bordered={false} className="glass-panel" style={{ borderRadius: '20px', padding: '60px 0', textAlign: 'center' }}>
+        <Card variant="borderless" className="glass-panel" style={{ borderRadius: '20px', padding: '60px 0', textAlign: 'center' }}>
           <Empty
             image={<ShoppingCartOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
             description="Giỏ hàng của bạn đang trống."

@@ -336,7 +336,7 @@ const AdminPractice: React.FC = () => {
                 <span className="font-bold text-slate-800">RTK Query & REST API Cache Simulator</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="shadow-md rounded-2xl border border-slate-100"
           >
             <Alert
@@ -446,7 +446,7 @@ const AdminPractice: React.FC = () => {
                 <span className="font-bold text-slate-800">Tailwind CSS + Ant Design 5 Playground</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="shadow-md rounded-2xl border border-slate-100"
           >
             <Alert
@@ -543,7 +543,7 @@ const AdminPractice: React.FC = () => {
                 onChange={toggleSocket}
               />
             }
-            bordered={false}
+            variant="borderless"
             className="shadow-md rounded-2xl border border-slate-100"
           >
             <Alert
@@ -593,7 +593,7 @@ const AdminPractice: React.FC = () => {
                 <span className="font-bold text-slate-800">Next.js + Redux Architecture Guide</span>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             className="shadow-md rounded-2xl border border-slate-100"
           >
             <Tabs

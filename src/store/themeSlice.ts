@@ -83,6 +83,11 @@ export const themeSlice = createSlice({
     setDashboardTab: (state, action: PayloadAction<string>) => {
       state.currentDashboardTab = action.payload;
     },
+
+    // Hàm set trực tiếp toàn bộ giỏ hàng (Dùng cho việc đồng bộ BroadcastChannel)
+    setCart: (state, action: PayloadAction<CartItem[]>) => {
+      state.cart = action.payload;
+    },
   },
 });
 
@@ -98,6 +103,7 @@ export const {
   removeFromCart,
   clearCart,
   setDashboardTab,
+  setCart,
 } = themeSlice.actions;
 
 /**

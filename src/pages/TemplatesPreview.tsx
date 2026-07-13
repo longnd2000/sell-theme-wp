@@ -98,7 +98,7 @@ const TemplatesPreview: React.FC = () => {
           <Col xs={24} sm={12} lg={6} key={idx}>
             <Card
               hoverable
-              bordered={false}
+              variant="borderless"
               cover={
                 <div style={{ position: 'relative', overflow: 'hidden', height: '220px', borderRadius: '16px 16px 0 0' }}>
                   <img
@@ -182,7 +182,7 @@ const TemplatesPreview: React.FC = () => {
         ]}
         width={1000}
         centered
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={{ textAlign: 'center', marginTop: '16px', padding: '10px', background: '#f8fafc', borderRadius: '12px' }}>
           <img

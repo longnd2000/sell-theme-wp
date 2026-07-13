@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography, Drawer } from 'antd';
+import { ConfigProvider, Layout, Menu, Button, Badge, theme, Row, Col, Typography, Drawer, Spin } from 'antd';
 import { ShopOutlined, DashboardOutlined, ShoppingCartOutlined, ThunderboltOutlined, SettingOutlined, DatabaseOutlined, MenuOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
-import Market from './pages/Market';
-import ThemeDetail from './pages/ThemeDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Services from './pages/Services';
-import TemplatesPreview from './pages/TemplatesPreview';
-import AdminThemes from './admin/Themes';
-import AdminLicenses from './admin/Licenses';
+import { useCartSync } from './hooks/useCartSync';
+import LiveChat from './components/LiveChat';
+
+// Sử dụng React.lazy để Code Splitting - Các trang này sẽ chỉ được tải (fetch JS) khi user truy cập đến
+const Market = lazy(() => import('./pages/Market'));
+const ThemeDetail = lazy(() => import('./pages/ThemeDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Services = lazy(() => import('./pages/Services'));
+const TemplatesPreview = lazy(() => import('./pages/TemplatesPreview'));
+const AdminThemes = lazy(() => import('./admin/Themes'));
+const AdminLicenses = lazy(() => import('./admin/Licenses'));
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -29,6 +33,9 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('admin_logged_in') === 'true';
   });
+
+  // Tích hợp BroadcastChannel để đồng bộ giỏ hàng
+  useCartSync(cart);
 
   // Sử dụng useEffect để lắng nghe sự kiện đăng nhập/đăng xuất thay đổi trên phạm vi window.
   // Cơ chế này giúp cập nhật ngay lập tức giao diện Menu Header (ẩn/hiện các tab quản trị).
@@ -216,18 +223,24 @@ const App: React.FC = () => {
 
         <Content className="main-content-layout" style={{ maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
           <div className="animate-fade-in">
-            <Routes>
-              <Route path="/" element={<Services />} />
-              <Route path="/themes" element={<Market />} />
-              <Route path="/theme/:id" element={<ThemeDetail />} />
-              <Route path="/templates-preview" element={<TemplatesPreview />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/admin/licenses" element={<AdminLicenses />} />
-              <Route path="/admin/themes" element={<AdminThemes />} />
-            </Routes>
+            {/* Suspense hiển thị Fallback (Loading spinner) trong khi chờ tải các Chunk JS của các trang được import bằng React.lazy */}
+            <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '50vh' }}><Spin size="large"><div style={{ marginTop: '16px', color: '#6366f1', fontWeight: 600 }}>Đang tải trang...</div></Spin></div>}>
+              <Routes>
+                <Route path="/" element={<Services />} />
+                <Route path="/themes" element={<Market />} />
+                <Route path="/theme/:id" element={<ThemeDetail />} />
+                <Route path="/templates-preview" element={<TemplatesPreview />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/admin/licenses" element={<AdminLicenses />} />
+                <Route path="/admin/themes" element={<AdminThemes />} />
+              </Routes>
+            </Suspense>
           </div>
         </Content>
+
+        {/* Live Chat giả lập Socket Realtime */}
+        <LiveChat />
 
         <Footer style={{ textAlign: 'center', background: 'transparent', borderTop: '1px solid rgba(0, 0, 0, 0.05)', color: '#8c8c8c' }}>
           WPHub ©{new Date().getFullYear()} - Premium WordPress Themes & Activation Management System
