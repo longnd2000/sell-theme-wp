@@ -29,6 +29,27 @@ class LX_Theme_Manager {
     }
 
     private function __construct() {
+        // Xử lý CORS và Preflight OPTIONS sớm nhất để tránh lỗi CORS trên mọi máy chủ
+        add_action('init', function() {
+            if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '*';
+                header("Access-Control-Allow-Origin: $origin");
+                header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+                header('Access-Control-Allow-Headers: Authorization, Content-Type, X-LX-API-Token, x-lx-api-token');
+                header('Access-Control-Allow-Credentials: true');
+                header('HTTP/1.1 200 OK');
+                exit(0);
+            }
+        });
+
+        add_action('send_headers', function() {
+            $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '*';
+            header("Access-Control-Allow-Origin: $origin");
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
+            header('Access-Control-Allow-Headers: Authorization, Content-Type, X-LX-API-Token, x-lx-api-token');
+            header('Access-Control-Allow-Credentials: true');
+        });
+
         // Đăng ký Custom Post Types và Custom Taxonomy
         add_action('init', array($this, 'register_custom_post_types'));
         
@@ -612,9 +633,6 @@ class LX_Theme_Manager {
         ));
     }
 
-    /**
-     * Hàm kiểm tra API Token dùng chung gửi từ React JS để cho phép gọi API
-     */
     public function validate_app_api_token($request) {
         // Cho phép Preflight Request (OPTIONS) luôn thông qua mà không cần check token để tránh lỗi CORS
         if ($request->get_method() === 'OPTIONS') {
@@ -1065,7 +1083,8 @@ class LX_Theme_Manager {
 
         remove_filter('rest_pre_serve_request', 'rest_send_cors_headers');
         add_filter('rest_pre_serve_request', function($value) {
-            header('Access-Control-Allow-Origin: *');
+            $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '*';
+            header("Access-Control-Allow-Origin: $origin");
             header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
             header('Access-Control-Allow-Headers: Authorization, Content-Type, X-LX-API-Token, x-lx-api-token');
             header('Access-Control-Allow-Credentials: true');

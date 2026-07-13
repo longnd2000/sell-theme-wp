@@ -42,6 +42,14 @@ export interface UserLicense {
   expiresAt: string;                      // Ngày hết hạn key
 }
 
+const getApiUrl = (url: string): string => {
+  if (url.includes('free.nf') || url.includes('infinityfree')) {
+    // Sử dụng CORS Proxy của corsproxy.io để lách luật JS Challenge và CORS của InfinityFree
+    return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 /**
  * 3. Tạo API Service chính bằng createApi
  * RTK Query hoạt động dựa trên cơ chế cấu hình tập trung. Nó sẽ tự động tạo ra
@@ -72,7 +80,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             headers: {
               'X-LX-API-Token': apiToken
             }
@@ -128,7 +136,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/themes/${id}`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             headers: {
               'X-LX-API-Token': apiToken
             }
@@ -183,7 +191,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             headers: {
               'X-LX-API-Token': apiToken
             }
@@ -218,7 +226,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/activate`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -257,7 +265,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/deactivate`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -296,7 +304,7 @@ export const themeApi = createApi({
           const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/licenses/purchase`;
           const apiToken = import.meta.env.VITE_LX_API_TOKEN || '';
 
-          const response = await fetch(wpApiUrl, {
+          const response = await fetch(getApiUrl(wpApiUrl), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
