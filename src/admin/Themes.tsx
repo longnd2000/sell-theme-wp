@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Typography, Card, Tag, Drawer, Form, Input, InputNumber, Select, Popconfirm, message, Image, Row, Col, AutoComplete } from 'antd';
+import { Table, Button, Space, Typography, Card, Tag, Drawer, Form, Input, InputNumber, Select, Popconfirm, message, Image, Row, Col, AutoComplete, Alert } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
@@ -178,36 +178,22 @@ const AdminThemes: React.FC = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: '150px',
-      render: (record: ThemeItem) => (
-        <Space size="middle">
+      width: '180px',
+      render: (record: ThemeItem) => {
+        const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+        const wpEditUrl = `${wpSiteUrl}/wp-admin/post.php?post=${record.id}&action=edit`;
+        return (
           <Button 
-            type="text" 
-            icon={<EditOutlined style={{ color: '#6366f1' }} />} 
-            onClick={() => handleEditClick(record)} 
-            style={{ borderRadius: '6px' }}
+            type="default" 
+            icon={<EditOutlined style={{ color: '#4f46e5' }} />} 
+            href={wpEditUrl}
+            target="_blank"
+            style={{ borderRadius: '6px', fontWeight: 600, borderColor: '#cbd5e1' }}
           >
-            Sửa
+            Sửa trên WordPress
           </Button>
-          <Popconfirm
-            title="Xác nhận xóa theme"
-            description="Bạn có chắc chắn muốn xóa theme này khỏi danh sách đang bán không? Hành động này không thể hoàn tác."
-            onConfirm={() => handleDeleteConfirm(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
-              style={{ borderRadius: '6px' }}
-            >
-              Xóa
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
+        );
+      }
     }
   ];
 
@@ -301,8 +287,15 @@ const AdminThemes: React.FC = () => {
         <div>
           <Title level={2} style={{ margin: 0, fontWeight: 800 }}>Quản Lý Danh Sách Theme Bán</Title>
           <Paragraph type="secondary" style={{ margin: '6px 0 0 0' }}>
-            Thêm mới, sửa đổi thông tin hoặc xóa các template, giao diện WordPress đang trưng bày trên cửa hàng.
+            Xem danh sách các template, giao diện WordPress đang trưng bày trên cửa hàng.
           </Paragraph>
+          <Alert
+            message="Quản lý dữ liệu qua WordPress Backend"
+            description="Hệ thống sử dụng WordPress làm Backend quản lý dữ liệu. Vui lòng bấm vào nút 'Sửa trên WordPress' hoặc 'Thêm Theme Mới (WP)' để chỉnh sửa trực quan bài viết và tệp tin cài đặt."
+            type="info"
+            showIcon
+            style={{ marginTop: '12px', borderRadius: '10px' }}
+          />
         </div>
         <Space>
           <Button 
@@ -317,10 +310,11 @@ const AdminThemes: React.FC = () => {
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
-            onClick={handleAddClick} 
-            style={{ height: '40px', borderRadius: '8px', fontWeight: 600, background: '#6366f1' }}
+            href={`${import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp'}/wp-admin/post-new.php?post_type=lx_theme`}
+            target="_blank"
+            style={{ height: '40px', borderRadius: '8px', fontWeight: 600, background: '#6366f1', borderColor: '#6366f1' }}
           >
-            Thêm Theme Mới
+            Thêm Theme Mới (WP)
           </Button>
         </Space>
       </div>
