@@ -23,8 +23,20 @@ export interface ThemeItem {
   tags: string[];      // Nhãn phân loại theme (Lấy từ fields/taxonomy của WP)
   activeProjects?: string; // Các dự án thực tế đang dùng theme này (Lấy từ active_projects của WP)
   servicePackage?: string; // Gói dịch vụ thiết kế website liên kết (Lấy từ service_package của WP)
+  servicePrice?: number;   // Giá của gói dịch vụ thiết kế (Lấy từ service_price của WP)
   rating: number;      // Điểm đánh giá trung bình từ khách hàng (Mặc định 5)
   downloads: number;   // Số lượt tải xuống/mua theme (Mặc định 0)
+}
+
+/**
+ * 1.5. Khai báo Interface ServicePrices
+ */
+export interface ServicePrices {
+  landing: number;
+  clone: number;
+  basic: number;
+  store: number;
+  premium: number;
 }
 
 /**
@@ -94,6 +106,7 @@ export const themeApi = createApi({
             tags: item.fields || [],
             activeProjects: item.active_projects || '',
             servicePackage: item.service_package || 'landing',
+            servicePrice: Number(item.service_price || 0),
             rating: 5,
             downloads: 0,
           }));
@@ -144,6 +157,7 @@ export const themeApi = createApi({
             tags: rawData.fields || [],
             activeProjects: rawData.active_projects || '',
             servicePackage: rawData.service_package || 'landing',
+            servicePrice: Number(rawData.service_price || 0),
             rating: 5,
             downloads: 0,
           };
@@ -159,6 +173,24 @@ export const themeApi = createApi({
         }
       },
       providesTags: (result, error, id) => [{ type: 'Themes', id }],
+    }),
+
+    /**
+     * ENDPOINT 2.5: Lấy bảng giá các gói dịch vụ
+     */
+    getServicePrices: builder.query<ServicePrices, void>({
+      async queryFn() {
+        try {
+          const wpSiteUrl = import.meta.env.VITE_WP_URL ? import.meta.env.VITE_WP_URL.replace(/\/$/, '') : 'http://localhost/wp';
+          const wpApiUrl = `${wpSiteUrl}/wp-json/lx/v1/settings/service-prices`;
+          const response = await fetch(wpApiUrl);
+          if (!response.ok) throw new Error('Failed to fetch service prices');
+          const data = await response.json();
+          return { data };
+        } catch (err: any) {
+          return { error: { status: 'CUSTOM_ERROR', error: err.message } };
+        }
+      }
     }),
 
     /**
@@ -209,6 +241,7 @@ export const themeApi = createApi({
 export const {
   useGetThemesQuery,
   useGetThemeDetailsQuery,
+  useGetServicePricesQuery,
   useGetLicensesQuery,
   useActivateLicenseMutation,
   useDeactivateLicenseMutation,

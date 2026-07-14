@@ -264,6 +264,14 @@ const ThemeDetail: React.FC = () => {
                         themeItem.servicePackage === 'premium' ? 'Gói Cao Cấp' : 'Gói Landing Page'
                       }
                     </Tag>
+                    {themeItem.servicePrice ? (
+                      <div style={{ marginTop: '10px', background: '#f8fafc', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary" style={{ fontSize: '13px' }}>Phí dịch vụ trọn gói:</Text>
+                        <Text strong style={{ color: '#10b981', fontSize: '15px' }}>
+                          + {themeItem.servicePrice.toLocaleString('vi-VN')} đ
+                        </Text>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -4,6 +4,7 @@ import { Row, Col, Card, Button, Typography, Space, Divider, Select, Modal, Tag,
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setSelectedPackage, setSelectedCategory } from '../store/themeSlice';
+import { useGetServicePricesQuery } from '../store/themeApi';
 // Import các Icons từ Ant Design để minh họa tính năng trực quan
 import {
   CheckOutlined,
@@ -219,6 +220,7 @@ const PLANS: PricingPlan[] = [
 const Services: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { data: servicePrices } = useGetServicePricesQuery();
   // Khởi tạo ref để điều khiển slider của Ant Design Carousel programmatically
   const carouselRef = useRef<any>(null);
 
@@ -501,7 +503,27 @@ const Services: React.FC = () => {
           ]}
           style={{ paddingBottom: '30px' }} // Khoảng trống cho các dấu chấm điều hướng dots bên dưới
         >
-          {PLANS.map((plan) => {
+          {PLANS.map((basePlan) => {
+            let apiPrice = basePlan.price;
+            let apiOriginalPrice = basePlan.originalPrice || basePlan.price;
+
+            if (servicePrices) {
+              if (basePlan.key === 'landing' && servicePrices.landing) apiPrice = servicePrices.landing;
+              if (basePlan.key === 'clone' && servicePrices.clone) apiPrice = servicePrices.clone;
+              if (basePlan.key === 'basic' && servicePrices.basic) apiPrice = servicePrices.basic;
+              if (basePlan.key === 'store' && servicePrices.store) apiPrice = servicePrices.store;
+              if (basePlan.key === 'premium' && servicePrices.premium) apiPrice = servicePrices.premium;
+
+              if (basePlan.originalPrice) {
+                 const diff = basePlan.originalPrice - basePlan.price;
+                 apiOriginalPrice = apiPrice + diff;
+              } else {
+                 apiOriginalPrice = apiPrice;
+              }
+            }
+
+            const plan = { ...basePlan, price: apiPrice, originalPrice: apiOriginalPrice };
+
             const isOwned = hasDomainHosting[plan.title] || false;
             const selectedSuffix = selectedDomains[plan.title] || '.top';
             const domainOpt = DOMAIN_OPTIONS.find(d => d.suffix === selectedSuffix);

@@ -48,6 +48,9 @@ class LX_Theme_Manager {
         // Đăng ký cấu hình ACF Local Fields (ACF Pro 6.2)
         add_action('acf/init', array($this, 'register_acf_field_groups'));
 
+        // Đăng ký trang tùy chọn cài đặt (Options Page)
+        add_action('acf/init', array($this, 'register_options_page'));
+
         // Đăng ký các Endpoint REST API
         add_action('rest_api_init', array($this, 'register_api_routes'));
     }
@@ -111,6 +114,24 @@ class LX_Theme_Manager {
         );
 
         register_taxonomy('lx_theme_field', array('lx_theme'), $tax_args);
+    }
+
+    // ==========================================
+    // 1.5. ĐĂNG KÝ TRANG TÙY CHỌN (OPTIONS PAGE)
+    // ==========================================
+
+    public function register_options_page() {
+        if( function_exists('acf_add_options_page') ) {
+            acf_add_options_page(array(
+                'page_title'    => 'Cài đặt Giá Gói Dịch Vụ',
+                'menu_title'    => 'Giá Gói Dịch Vụ',
+                'menu_slug'     => 'lx-theme-service-prices',
+                'capability'    => 'manage_options', // Dành cho Admin
+                'redirect'      => false,
+                'icon_url'      => 'dashicons-money-alt', // Icon tiền tệ
+                'position'      => 30, // Nằm tách biệt bên ngoài như 1 menu chính
+            ));
+        }
     }
 
     // ==========================================
@@ -192,6 +213,63 @@ class LX_Theme_Manager {
             'active' => true,
         ));
 
+        // B. CẤU HÌNH TRƯỜNG DỮ LIỆU CHO TRANG TÙY CHỌN (GIÁ GÓI DỊCH VỤ)
+        acf_add_local_field_group(array(
+            'key' => 'group_lx_service_prices',
+            'title' => 'Cài đặt Giá Các Gói Dịch Vụ',
+            'fields' => array(
+                array(
+                    'key' => 'field_price_landing',
+                    'label' => 'Giá Gói Landing Page (VNĐ)',
+                    'name' => 'price_landing',
+                    'type' => 'number',
+                    'instructions' => 'Nhập giá bán cho Gói Landing Page. Ví dụ: 1500000',
+                    'required' => 1,
+                ),
+                array(
+                    'key' => 'field_price_clone',
+                    'label' => 'Giá Gói Clone & Vibe (VNĐ)',
+                    'name' => 'price_clone',
+                    'type' => 'number',
+                    'instructions' => 'Nhập giá bán cho Gói Clone & Vibe. Ví dụ: 2000000',
+                    'required' => 1,
+                ),
+                array(
+                    'key' => 'field_price_basic',
+                    'label' => 'Giá Gói Cơ Bản (VNĐ)',
+                    'name' => 'price_basic',
+                    'type' => 'number',
+                    'instructions' => 'Nhập giá bán cho Gói Cơ Bản. Ví dụ: 3000000',
+                    'required' => 1,
+                ),
+                array(
+                    'key' => 'field_price_store',
+                    'label' => 'Giá Gói Bán Hàng (VNĐ)',
+                    'name' => 'price_store',
+                    'type' => 'number',
+                    'instructions' => 'Nhập giá bán cho Gói Bán Hàng. Ví dụ: 5000000',
+                    'required' => 1,
+                ),
+                array(
+                    'key' => 'field_price_premium',
+                    'label' => 'Giá Gói Cao Cấp (VNĐ)',
+                    'name' => 'price_premium',
+                    'type' => 'number',
+                    'instructions' => 'Nhập giá bán cho Gói Cao Cấp. Ví dụ: 10000000',
+                    'required' => 1,
+                ),
+            ),
+            'location' => array(
+                array(
+                    array(
+                        'param' => 'options_page',
+                        'operator' => '==',
+                        'value' => 'lx-theme-service-prices',
+                    ),
+                ),
+            ),
+            'active' => true,
+        ));
 
     }
 
@@ -213,6 +291,12 @@ class LX_Theme_Manager {
             'permission_callback' => '__return_true'
         ));
 
+        // B. ENDPOINT DÀNH CHO CÀI ĐẶT
+        register_rest_route('lx/v1', '/settings/service-prices', array(
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => array($this, 'api_get_service_prices'),
+            'permission_callback' => '__return_true'
+        ));
 
     }
 
@@ -243,6 +327,9 @@ class LX_Theme_Manager {
                     $fields = array();
                 }
 
+                $service_package = get_field('lx_service_package', $post_id);
+                $service_price = $service_package ? (int) get_field('price_' . $service_package, 'option') : 0;
+
                 $output_list[] = array(
                     'id'              => $post_id,
                     'title'           => get_the_title(),
@@ -253,7 +340,8 @@ class LX_Theme_Manager {
                     'price'           => (int) get_field('lx_price', $post_id),
                     'preview_image'   => esc_url(get_field('lx_preview_image', $post_id)),
                     'active_projects' => esc_url(get_field('lx_active_projects', $post_id)),
-                    'service_package' => get_field('lx_service_package', $post_id),
+                    'service_package' => $service_package,
+                    'service_price'   => $service_price,
                     'fields'          => array_values($fields)
                 );
             }
@@ -281,6 +369,9 @@ class LX_Theme_Manager {
             $fields = array();
         }
 
+        $service_package = get_field('lx_service_package', $id);
+        $service_price = $service_package ? (int) get_field('price_' . $service_package, 'option') : 0;
+
         $theme_detail = array(
             'id'              => $id,
             'title'           => $post->post_title,
@@ -290,11 +381,27 @@ class LX_Theme_Manager {
             'price'           => (int) get_field('lx_price', $id),
             'preview_image'   => esc_url(get_field('lx_preview_image', $id)),
             'active_projects' => esc_url(get_field('lx_active_projects', $id)),
-            'service_package' => get_field('lx_service_package', $id),
+            'service_package' => $service_package,
+            'service_price'   => $service_price,
             'fields'          => array_values($fields)
         );
 
         return new WP_REST_Response($theme_detail, 200);
+    }
+
+    /**
+     * API Callback: Lấy danh sách giá các gói dịch vụ
+     */
+    public function api_get_service_prices($request) {
+        $prices = array(
+            'landing' => (int) get_field('price_landing', 'option'),
+            'clone'   => (int) get_field('price_clone', 'option'),
+            'basic'   => (int) get_field('price_basic', 'option'),
+            'store'   => (int) get_field('price_store', 'option'),
+            'premium' => (int) get_field('price_premium', 'option'),
+        );
+
+        return new WP_REST_Response($prices, 200);
     }
 }
 
